@@ -6,3 +6,5 @@ monitor.on(
     'cpudata',
     (load: CpuInfo[]) => console.log(load)
 );
+
+setTimeout(() => monitor.stopMonitor(), 3000);

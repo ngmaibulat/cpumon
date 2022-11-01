@@ -50,6 +50,15 @@ monitor.on(
 );
 ```
 
+### Stop Monitoring
+
+You can stop monitoring cpu by calling `.stopMonitor()` method.
+For example, to stop monitoring after 5 min, you can use the following code:
+
+```javascript
+setTimeout(() => monitor.stopMonitor(), 5*60*1000);
+```
+
 ### Data Types:
 
 ```javascript

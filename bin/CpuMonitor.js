@@ -10,10 +10,15 @@ class CpuMonitor extends EventEmitter {
   constructor(ms) {
     super();
     __publicField(this, "ms");
+    __publicField(this, "intervalId");
     __publicField(this, "current");
     this.ms = ms;
     this.current = this.getCpuInfo();
-    setInterval(() => this.measureCpu(), this.ms);
+    this.intervalId = setInterval(() => this.measureCpu(), this.ms);
+  }
+  stopMonitor() {
+    clearInterval(this.intervalId);
+    this.removeAllListeners();
   }
   getCpuInfo() {
     const cpus = os.cpus();

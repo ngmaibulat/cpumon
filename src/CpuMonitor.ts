@@ -15,6 +15,7 @@ export type CpuInfo = {
 export class CpuMonitor extends EventEmitter
 {
     ms: number;
+    intervalId: NodeJS.Timer;
     current: Array<CpuInfo>;
     
     constructor(ms: number)
@@ -22,8 +23,13 @@ export class CpuMonitor extends EventEmitter
         super();
         this.ms = ms;
         this.current = this.getCpuInfo();
+        this.intervalId = setInterval(() => this.measureCpu(), this.ms);
+    }
 
-        setInterval(() => this.measureCpu(), this.ms);
+    stopMonitor()
+    {
+        clearInterval(this.intervalId);
+        this.removeAllListeners();
     }
 
     getCpuInfo(): CpuInfo[]

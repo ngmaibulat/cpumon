@@ -4,3 +4,4 @@ monitor.on(
   "cpudata",
   (load) => console.log(load)
 );
+setTimeout(() => monitor.stopMonitor(), 3e3);
