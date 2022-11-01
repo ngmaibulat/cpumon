@@ -1,0 +1,42 @@
+{
+  "name": "cpumon",
+  "version": "0.0.1",
+  "description": "CPU Monitor Library and CLI tool",
+  "main": "bin/index.js",
+  "type": "module",
+  "scripts": {
+    "esbuild-help": "esbuild -h",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-watch": "esbuild src/index.ts --bundle --outdir=bin --format=esm --target=es2017 --platform=node --watch",
+    "build": "esbuild src/index.ts --bundle --outdir=bin --format=esm --target=es2017 --platform=node",
+    "commit": "git add . ; git commit -a -m 'minor fix'; git push"
+  },
+  "bin": {
+    "cpumon": "bin/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ngmaibulat/cpumon.git"
+  },
+  "keywords": [
+    "CPU",
+    "System",
+    "Resource",
+    "Monitor",
+    "Sysmon",
+    "OS"
+  ],
+  "author": "Aibulat",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ngmaibulat/cpumon/issues"
+  },
+  "homepage": "https://github.com/ngmaibulat/cpumon#readme",
+  "dependencies": {
+    "chalk": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.8",
+    "esbuild": "^0.15.12"
+  }
+}
