@@ -13,4 +13,3 @@ export type LoadInfo = {
     load: Array<CpuInfo>;
 }
 
-export type StrFunction = (str: string) => string;

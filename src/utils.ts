@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import {CpuInfo, StrFunction} from './types.js';
 
+type StrFunction = (str: string) => string;
 
 export function getProgressBar(progress: number, symbol: string, fn: StrFunction): string
 {
@@ -20,7 +20,6 @@ export function getProgressBar(progress: number, symbol: string, fn: StrFunction
 
     return res;
 }
-
 
 
 

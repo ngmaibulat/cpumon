@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
-import os from 'os';
-import EventEmitter from 'events';
 import chalk from 'chalk';
 
-import { CpuInfo, StrFunction, LoadInfo} from './types.js';
+import { LoadInfo} from './types.js';
 import { CpuMonitor } from './CpuMonitor.js';
 import { getProgressBar } from './utils.js';
 

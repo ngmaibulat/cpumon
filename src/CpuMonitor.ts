@@ -1,8 +1,7 @@
 import os from 'os';
 import EventEmitter from 'events';
-import chalk from 'chalk';
 
-import {CpuInfo, StrFunction} from './types.js';
+import {CpuInfo} from './types.js';
 import {sleep} from './utils.js';
 
 export class CpuMonitor extends EventEmitter
