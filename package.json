@@ -1,6 +1,6 @@
 {
   "name": "cpumon",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "CPU Monitor Library and CLI tool",
   "main": "bin/index.js",
   "type": "module",
