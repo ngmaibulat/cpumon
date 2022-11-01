@@ -2,7 +2,7 @@
   "name": "cpumon",
   "version": "0.0.5",
   "description": "CPU Monitor Library and CLI tool",
-  "main": "bin/index.js",
+  "main": "bin/CpuMonitor.js",
   "type": "module",
   "scripts": {
     "esbuild-help": "esbuild -h",
