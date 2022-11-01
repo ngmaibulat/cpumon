@@ -13,5 +13,28 @@ also have the data of cpu usage percentage for each cpu core.
 npx cpumon@latest
 ```
 
-### Use the Library
-The API of the Library is yet to be finalized and documented. Don't use it for now.
+### Use the Library:
+
+```javascript
+import { CpuInfo, CpuMonitor } from './CpuMonitor.js';
+
+const monitor = new CpuMonitor(1000);
+
+monitor.on(
+    'cpudata',
+    (load: CpuInfo[]) => console.log(load)
+);
+```
+
+### Data Types:
+
+```javascript
+type CpuInfo = {
+    model: string;
+    idle: number;
+    load: number;
+    total: number;
+    loadRatio?: number;
+    loadPercentage?: number;
+}
+```
