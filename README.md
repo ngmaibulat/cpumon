@@ -1,11 +1,16 @@
 ### Library and a CLI tool to monitor CPU usage
 
 ### The goal:
-The goal is to provide API to monitor CPU usage accross all
-available CPU cores. You can provide sampling interval.
-And subscribe to `cpudata` events which would be generated
+The goal is to provide simple API to monitor CPU usage accross all
+available CPU cores. You can provide sampling interval in ms to the constructor.
+The `CpuMonitor` class is based on standard NodeJS `EventEmitter`.
+
+
+You can subscribe to `cpudata` events which would be generated
 according to the provided sampling interval. The event would
 also have the data of cpu usage percentage for each cpu core.
+
+There is no CJS build provided. Only ESM is provided, so use `import` - not `require`.
 
 ### Use CLI tool:
 
