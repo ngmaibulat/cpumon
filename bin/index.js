@@ -494,10 +494,10 @@ var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
 // src/CpuMonitor.ts
+import os2 from "os";
 import EventEmitter from "events";
 
 // src/utils.ts
-import os2 from "os";
 function getProgressBar(progress, symbol, fn) {
   if (progress < 0 || progress > 100) {
     throw new Error("getProgressBar(): progress should be in range of from 0 to 100");
@@ -513,51 +513,10 @@ function getProgressBar(progress, symbol, fn) {
   res += `${percent}]`;
   return res;
 }
-function getCpuInfo() {
-  const cpus = os2.cpus();
-  return cpus.map((item) => {
-    const newitem = {
-      model: item.model,
-      idle: item.times.idle,
-      load: item.times.user + item.times.sys,
-      total: item.times.idle + item.times.user + item.times.sys
-    };
-    return newitem;
-  });
-}
 function sleep(ms) {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms);
   });
-}
-async function getCpuLoad(prev, ms) {
-  if (!prev.length) {
-    prev = getCpuInfo();
-  }
-  await sleep(ms);
-  const current = getCpuInfo();
-  const load = getCpuDiff(prev, current);
-  return { current, load };
-}
-function getCpuDiff(prev, current) {
-  let res = [];
-  if (prev.length != current.length) {
-    throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
-  }
-  for (let i = 0; i < prev.length; i++) {
-    const p = prev[i];
-    const c = current[i];
-    const newitem = {
-      model: p.model,
-      idle: c.idle - p.idle,
-      total: c.total - p.total,
-      load: c.load - p.load
-    };
-    newitem.loadRatio = newitem.load / newitem.total;
-    newitem.loadPercentage = Math.floor(newitem.loadRatio * 100);
-    res.push(newitem);
-  }
-  return res;
 }
 
 // src/CpuMonitor.ts
@@ -571,8 +530,49 @@ var CpuMonitor = class extends EventEmitter {
     setInterval(() => this.emit("tick"), this.ms);
     this.on("tick", this.measureCpu);
   }
+  getCpuInfo() {
+    const cpus = os2.cpus();
+    return cpus.map((item) => {
+      const newitem = {
+        model: item.model,
+        idle: item.times.idle,
+        load: item.times.user + item.times.sys,
+        total: item.times.idle + item.times.user + item.times.sys
+      };
+      return newitem;
+    });
+  }
+  async getCpuLoad(prev, ms) {
+    if (!prev.length) {
+      prev = this.getCpuInfo();
+    }
+    await sleep(ms);
+    const current = this.getCpuInfo();
+    const load = this.getCpuDiff(prev, current);
+    return { current, load };
+  }
+  getCpuDiff(prev, current) {
+    let res = [];
+    if (prev.length != current.length) {
+      throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
+    }
+    for (let i = 0; i < prev.length; i++) {
+      const p = prev[i];
+      const c = current[i];
+      const newitem = {
+        model: p.model,
+        idle: c.idle - p.idle,
+        total: c.total - p.total,
+        load: c.load - p.load
+      };
+      newitem.loadRatio = newitem.load / newitem.total;
+      newitem.loadPercentage = Math.floor(newitem.loadRatio * 100);
+      res.push(newitem);
+    }
+    return res;
+  }
   async onTick() {
-    const { current, load } = await getCpuLoad([], 1e3);
+    const { current, load } = await this.getCpuLoad([], 1e3);
     const str = load.reduce((prev, current2) => {
       return `${prev} ${current2.loadPercentage}`;
     }, "cpu: ");
@@ -585,7 +585,7 @@ var CpuMonitor = class extends EventEmitter {
     console.table({ load: arrdata });
   }
   async measureCpu() {
-    const { current, load } = await getCpuLoad(this.current, this.ms);
+    const { current, load } = await this.getCpuLoad(this.current, this.ms);
     this.current = current;
     this.emit("cpudata", { current, load });
   }
