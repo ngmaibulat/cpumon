@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import os from 'os';
 import EventEmitter from 'events';
 import chalk from 'chalk';
