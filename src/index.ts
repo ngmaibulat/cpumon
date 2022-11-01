@@ -4,16 +4,23 @@ import os from 'os';
 import EventEmitter from 'events';
 import chalk from 'chalk';
 
+import { CpuInfo, StrFunction, LoadInfo} from './types.js';
 import { CpuMonitor } from './CpuMonitor.js';
 import { getProgressBar } from './utils.js';
 
 const mon = new CpuMonitor(1000);
 
-mon.on('cpudata', ({current, load}) => {
-    // console.log(current);
+mon.on('cpudata', ({current, load}: LoadInfo) => {
+    console.log(current);
 
     const diags = load.map(current => {
+        
+        if (typeof current.loadPercentage != 'number') {
+            throw new Error("loadPercentage must be a number!");
+        }
+
         const symbol = '|';
+
         return getProgressBar(current.loadPercentage,  symbol, chalk.green);
     });
 
@@ -30,24 +37,9 @@ mon.on('cpudata', ({current, load}) => {
 })
 
 
-const symbol = '|';
-const test1 = getProgressBar(0,  symbol, chalk.green);
-const test2 = getProgressBar(20, symbol, chalk.green);
-const test3 = getProgressBar(56, symbol, chalk.green);
-const test4 = getProgressBar(99, symbol, chalk.green);
-
-// console.log(test1);
-// console.log(test2);
-// console.log(test3);
-// console.log(test4);
-
-
-
 /**
  * todo:
- * periodic update with nice ui - like htop
  * json colored output
- * cli/scriptable interface
- * event emitter based class
+ * cli params: table vs json output, count times vs watch mode
  * rest api
  */

@@ -498,13 +498,13 @@ import EventEmitter from "events";
 
 // src/utils.ts
 import os2 from "os";
-function getProgressBar(progress, symbol2, fn) {
+function getProgressBar(progress, symbol, fn) {
   if (progress < 0 || progress > 100) {
     throw new Error("getProgressBar(): progress should be in range of from 0 to 100");
   }
   let res = "[";
   for (let i = 0; i < progress; i++) {
-    res += fn(symbol2);
+    res += fn(symbol);
   }
   for (let i = progress; i < 100; i++) {
     res += " ";
@@ -565,9 +565,11 @@ var CpuMonitor = class extends EventEmitter {
   constructor(ms) {
     super();
     __publicField(this, "ms");
+    __publicField(this, "current");
     this.ms = ms;
+    this.current = [];
     setInterval(() => this.emit("tick"), this.ms);
-    this.on("tick", this.showDiagram);
+    this.on("tick", this.measureCpu);
   }
   async onTick() {
     const { current, load } = await getCpuLoad([], 1e3);
@@ -582,8 +584,9 @@ var CpuMonitor = class extends EventEmitter {
     console.clear();
     console.table({ load: arrdata });
   }
-  async showDiagram() {
-    const { current, load } = await getCpuLoad([], 1e3);
+  async measureCpu() {
+    const { current, load } = await getCpuLoad(this.current, this.ms);
+    this.current = current;
     this.emit("cpudata", { current, load });
   }
 };
@@ -591,9 +594,13 @@ var CpuMonitor = class extends EventEmitter {
 // src/index.ts
 var mon = new CpuMonitor(1e3);
 mon.on("cpudata", ({ current, load }) => {
+  console.log(current);
   const diags = load.map((current2) => {
-    const symbol2 = "|";
-    return getProgressBar(current2.loadPercentage, symbol2, source_default.green);
+    if (typeof current2.loadPercentage != "number") {
+      throw new Error("loadPercentage must be a number!");
+    }
+    const symbol = "|";
+    return getProgressBar(current2.loadPercentage, symbol, source_default.green);
   });
   console.clear();
   const fmt = {
@@ -604,8 +611,3 @@ mon.on("cpudata", ({ current, load }) => {
     console.log(i.toLocaleString("en-US", fmt), diags[i - 1]);
   }
 });
-var symbol = "|";
-var test1 = getProgressBar(0, symbol, source_default.green);
-var test2 = getProgressBar(20, symbol, source_default.green);
-var test3 = getProgressBar(56, symbol, source_default.green);
-var test4 = getProgressBar(99, symbol, source_default.green);

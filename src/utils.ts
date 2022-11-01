@@ -1,8 +1,9 @@
 import os from 'os';
 import chalk from 'chalk';
+import {CpuInfo, StrFunction} from './types.js';
 
 
-export function getProgressBar(progress: number, symbol: string, fn)
+export function getProgressBar(progress: number, symbol: string, fn: StrFunction): string
 {
     if (progress < 0 || progress > 100) {
         throw new Error("getProgressBar(): progress should be in range of from 0 to 100");
@@ -22,7 +23,7 @@ export function getProgressBar(progress: number, symbol: string, fn)
 }
 
 
-export function getCpuInfo()
+export function getCpuInfo(): Array<CpuInfo>
 {
     const cpus = os.cpus();
 
@@ -47,7 +48,7 @@ export function sleep(ms: number)
 }
 
 
-export async function getCpuLoad(prev, ms)
+export async function getCpuLoad(prev: Array<CpuInfo>, ms: number)
 {
     if (!prev.length) {
         prev = getCpuInfo();
@@ -62,7 +63,7 @@ export async function getCpuLoad(prev, ms)
 }
 
 
-export function getCpuDiff(prev, current)
+export function getCpuDiff(prev: Array<CpuInfo>, current: Array<CpuInfo>)
 {
     let res = [];
 
@@ -74,7 +75,7 @@ export function getCpuDiff(prev, current)
         const p = prev[i];
         const c = current[i];
 
-        const newitem = {
+        const newitem: CpuInfo = {
             model: p.model,
             idle: c.idle - p.idle,
             total: c.total - p.total,
