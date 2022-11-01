@@ -18,10 +18,29 @@ There is no CJS build provided. Only ESM is provided, so use `import` - not `req
 npx cpumon@latest
 ```
 
-### Use the Library:
+### Install as dependency
+
+```sh
+npm i cpumon
+```
+
+### Use in JS:
 
 ```javascript
-import { CpuInfo, CpuMonitor } from './CpuMonitor.js';
+import { CpuMonitor } from 'cpumon';
+
+const monitor = new CpuMonitor(1000);
+
+monitor.on(
+    'cpudata',
+    (load) => console.log(load)
+);
+```
+
+### Use in TS
+
+```javascript
+import { CpuInfo, CpuMonitor } from 'cpumon';
 
 const monitor = new CpuMonitor(1000);
 
