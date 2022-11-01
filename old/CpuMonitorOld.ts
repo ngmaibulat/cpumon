@@ -1,6 +1,7 @@
 import os from 'os';
 import EventEmitter from 'events';
 
+import {sleep} from '../src/utils.js';
 
 export type CpuInfo = {
     model: string;
@@ -11,22 +12,22 @@ export type CpuInfo = {
     loadPercentage?: number;
 }
 
-
 export class CpuMonitor extends EventEmitter
 {
     ms: number;
-    current: Array<CpuInfo>;
+    current: Array<any>;
     
     constructor(ms: number)
     {
         super();
         this.ms = ms;
-        this.current = this.getCpuInfo();
+        this.current = [];
 
-        setInterval(() => this.measureCpu(), this.ms);
+        setInterval(() => this.emit('tick'), this.ms);
+        this.on('tick', this.measureCpu);
     }
 
-    getCpuInfo(): CpuInfo[]
+    getCpuInfo(): Array<CpuInfo>
     {
         const cpus = os.cpus();
 
@@ -43,7 +44,23 @@ export class CpuMonitor extends EventEmitter
     }
 
 
-    getCpuDiff(prev: CpuInfo[], current: CpuInfo[])
+
+    async getCpuLoad(prev: Array<CpuInfo>, ms: number)
+    {
+        if (!prev.length) {
+            prev = this.getCpuInfo();
+        }
+
+        await sleep(ms);
+
+        const current = this.getCpuInfo();
+        const load = this.getCpuDiff(prev, current);
+
+        return {current, load};
+    }
+
+
+    getCpuDiff(prev: Array<CpuInfo>, current: Array<CpuInfo>)
     {
         let res = [];
 
@@ -61,7 +78,6 @@ export class CpuMonitor extends EventEmitter
                 total: c.total - p.total,
                 load: c.load - p.load,           
             };
-
             newitem.loadRatio = newitem.load / newitem.total;
             newitem.loadPercentage = Math.floor(newitem.loadRatio * 100);
 
@@ -72,11 +88,33 @@ export class CpuMonitor extends EventEmitter
     }
 
 
-    measureCpu()
+
+    async onTick()
     {
-        const next: CpuInfo[] = this.getCpuInfo();
-        const load = this.getCpuDiff(this.current, next);
-        this.current = next;
-        this.emit('cpudata', load);
+        const {current, load} = await this.getCpuLoad([], 1000);
+
+        const str = load.reduce((prev, current) => {
+            return `${prev} ${current.loadPercentage}`;
+        }, "cpu: ");
+
+        const fmt = {
+            minimumIntegerDigits: 2,
+            useGrouping: false
+        };
+
+        // const arrdata = load.map( item => item.loadPercentage.toLocaleString('en-US',fmt) );
+        const arrdata = load.map( item => item.loadPercentage );
+
+        // console.log(str.toString());
+        console.clear();
+        console.table({load: arrdata});
+    }
+
+    async measureCpu()
+    {
+        const {current, load} = await this.getCpuLoad(this.current, this.ms);
+        this.current = current;
+
+        this.emit('cpudata', {current, load});
     }
 }

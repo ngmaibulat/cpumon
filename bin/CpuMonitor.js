@@ -6,16 +6,14 @@ var __publicField = (obj, key, value) => {
 };
 import os from "os";
 import EventEmitter from "events";
-import { sleep } from "./utils.js";
 class CpuMonitor extends EventEmitter {
   constructor(ms) {
     super();
     __publicField(this, "ms");
     __publicField(this, "current");
     this.ms = ms;
-    this.current = [];
-    setInterval(() => this.emit("tick"), this.ms);
-    this.on("tick", this.measureCpu);
+    this.current = this.getCpuInfo();
+    setInterval(() => this.measureCpu(), this.ms);
   }
   getCpuInfo() {
     const cpus = os.cpus();
@@ -28,15 +26,6 @@ class CpuMonitor extends EventEmitter {
       };
       return newitem;
     });
-  }
-  async getCpuLoad(prev, ms) {
-    if (!prev.length) {
-      prev = this.getCpuInfo();
-    }
-    await sleep(ms);
-    const current = this.getCpuInfo();
-    const load = this.getCpuDiff(prev, current);
-    return { current, load };
   }
   getCpuDiff(prev, current) {
     let res = [];
@@ -58,23 +47,11 @@ class CpuMonitor extends EventEmitter {
     }
     return res;
   }
-  async onTick() {
-    const { current, load } = await this.getCpuLoad([], 1e3);
-    const str = load.reduce((prev, current2) => {
-      return `${prev} ${current2.loadPercentage}`;
-    }, "cpu: ");
-    const fmt = {
-      minimumIntegerDigits: 2,
-      useGrouping: false
-    };
-    const arrdata = load.map((item) => item.loadPercentage);
-    console.clear();
-    console.table({ load: arrdata });
-  }
-  async measureCpu() {
-    const { current, load } = await this.getCpuLoad(this.current, this.ms);
-    this.current = current;
-    this.emit("cpudata", { current, load });
+  measureCpu() {
+    const next = this.getCpuInfo();
+    const load = this.getCpuDiff(this.current, next);
+    this.current = next;
+    this.emit("cpudata", load);
   }
 }
 export {

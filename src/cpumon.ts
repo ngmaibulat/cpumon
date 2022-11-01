@@ -2,24 +2,23 @@
 
 import chalk from 'chalk';
 
-import { LoadInfo} from './types.js';
-import { CpuMonitor } from './CpuMonitor.js';
+import { CpuInfo, CpuMonitor } from './CpuMonitor.js';
 import { getProgressBar } from './utils.js';
 
 const mon = new CpuMonitor(1000);
 
-mon.on('cpudata', ({current, load}: LoadInfo) => {
-    console.log(current);
 
-    const diags = load.map(current => {
+mon.on('cpudata', (load: CpuInfo[]) => {
+
+    const diags = load.map(cpu => {
         
-        if (typeof current.loadPercentage != 'number') {
+        if (typeof cpu.loadPercentage != 'number') {
             throw new Error("loadPercentage must be a number!");
         }
 
         const symbol = '|';
 
-        return getProgressBar(current.loadPercentage,  symbol, chalk.green);
+        return getProgressBar(cpu.loadPercentage,  chalk.green(symbol));
     });
 
     console.clear();

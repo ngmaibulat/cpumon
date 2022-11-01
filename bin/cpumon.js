@@ -3,14 +3,13 @@ import chalk from "chalk";
 import { CpuMonitor } from "./CpuMonitor.js";
 import { getProgressBar } from "./utils.js";
 const mon = new CpuMonitor(1e3);
-mon.on("cpudata", ({ current, load }) => {
-  console.log(current);
-  const diags = load.map((current2) => {
-    if (typeof current2.loadPercentage != "number") {
+mon.on("cpudata", (load) => {
+  const diags = load.map((cpu) => {
+    if (typeof cpu.loadPercentage != "number") {
       throw new Error("loadPercentage must be a number!");
     }
     const symbol = "|";
-    return getProgressBar(current2.loadPercentage, symbol, chalk.green);
+    return getProgressBar(cpu.loadPercentage, chalk.green(symbol));
   });
   console.clear();
   const fmt = {
