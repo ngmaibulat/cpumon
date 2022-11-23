@@ -1,43 +1,44 @@
 {
-  "name": "cpumon",
-  "version": "0.0.12",
-  "description": "CPU Monitor Library and CLI tool",
-  "main": "bin/CpuMonitor.js",
-  "type": "module",
-  "scripts": {
-    "esbuild-help": "esbuild -h",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build-watch": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node --watch",
-    "build": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node",
-    "commit": "git add . ; git commit -a -m 'minor fix'; git push"
-  },
-  "bin": {
-    "cpumon": "bin/cpumon.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ngmaibulat/cpumon.git"
-  },
-  "keywords": [
-    "CPU",
-    "System",
-    "Resource",
-    "Monitor",
-    "Sysmon",
-    "OS"
-  ],
-  "author": "Aibulat",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ngmaibulat/cpumon/issues"
-  },
-  "homepage": "https://github.com/ngmaibulat/cpumon#readme",
-  "dependencies": {
-    "chalk": "^5.1.2"
-  },
-  "devDependencies": {
-    "@types/chalk": "^2.2.0",
-    "@types/node": "^18.11.8",
-    "esbuild": "^0.15.12"
-  }
+    "name": "cpumon",
+    "version": "0.0.12",
+    "description": "CPU Monitor Library and CLI tool",
+    "main": "bin/CpuMonitor.js",
+    "type": "module",
+    "scripts": {
+        "esbuild-help": "esbuild -h",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build-watch": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node --watch",
+        "build": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node",
+        "build:types": "tsc -p tsc-types.json",
+        "commit": "git add . ; git commit -a -m 'minor fix'; git push"
+    },
+    "bin": {
+        "cpumon": "bin/cpumon.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ngmaibulat/cpumon.git"
+    },
+    "keywords": [
+        "CPU",
+        "System",
+        "Resource",
+        "Monitor",
+        "Sysmon",
+        "OS"
+    ],
+    "author": "Aibulat",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ngmaibulat/cpumon/issues"
+    },
+    "homepage": "https://github.com/ngmaibulat/cpumon#readme",
+    "dependencies": {
+        "chalk": "^5.1.2"
+    },
+    "devDependencies": {
+        "@types/chalk": "^2.2.0",
+        "@types/node": "^18.11.8",
+        "esbuild": "^0.15.12"
+    }
 }
