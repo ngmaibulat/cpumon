@@ -6,6 +6,38 @@ var __publicField = (obj, key, value) => {
 };
 import os from "os";
 import EventEmitter from "events";
+function toCpuInfo(model, times) {
+  const total = Object.values(times).reduce((sum, ticks) => sum + ticks, 0);
+  return {
+    model,
+    idle: times.idle,
+    load: total - times.idle,
+    total
+  };
+}
+function getCpuInfo() {
+  return os.cpus().map((item) => toCpuInfo(item.model, item.times));
+}
+function getCpuDiff(prev, current) {
+  const res = [];
+  if (prev.length != current.length) {
+    throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
+  }
+  for (let i = 0; i < prev.length; i++) {
+    const p = prev[i];
+    const c = current[i];
+    const newitem = {
+      model: p.model,
+      idle: c.idle - p.idle,
+      total: c.total - p.total,
+      load: c.load - p.load
+    };
+    newitem.loadRatio = newitem.total > 0 ? newitem.load / newitem.total : 0;
+    newitem.loadPercentage = Math.min(100, Math.max(0, Math.floor(newitem.loadRatio * 100)));
+    res.push(newitem);
+  }
+  return res;
+}
 class CpuMonitor extends EventEmitter {
   constructor(ms) {
     super();
@@ -21,44 +53,29 @@ class CpuMonitor extends EventEmitter {
     this.removeAllListeners();
   }
   getCpuInfo() {
-    const cpus = os.cpus();
-    return cpus.map((item) => {
-      const newitem = {
-        model: item.model,
-        idle: item.times.idle,
-        load: item.times.user + item.times.sys,
-        total: item.times.idle + item.times.user + item.times.sys
-      };
-      return newitem;
-    });
+    return getCpuInfo();
   }
   getCpuDiff(prev, current) {
-    let res = [];
-    if (prev.length != current.length) {
-      throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
-    }
-    for (let i = 0; i < prev.length; i++) {
-      const p = prev[i];
-      const c = current[i];
-      const newitem = {
-        model: p.model,
-        idle: c.idle - p.idle,
-        total: c.total - p.total,
-        load: c.load - p.load
-      };
-      newitem.loadRatio = newitem.load / newitem.total;
-      newitem.loadPercentage = Math.floor(newitem.loadRatio * 100);
-      res.push(newitem);
-    }
-    return res;
+    return getCpuDiff(prev, current);
   }
   measureCpu() {
-    const next = this.getCpuInfo();
-    const load = this.getCpuDiff(this.current, next);
-    this.current = next;
-    this.emit("cpudata", load);
+    try {
+      const next = getCpuInfo();
+      if (next.length !== this.current.length) {
+        this.current = next;
+        return;
+      }
+      const load = getCpuDiff(this.current, next);
+      this.current = next;
+      this.emit("cpudata", load);
+    } catch (err) {
+      this.emit("error", err);
+    }
   }
 }
 export {
-  CpuMonitor
+  CpuMonitor,
+  getCpuDiff,
+  getCpuInfo,
+  toCpuInfo
 };

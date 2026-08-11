@@ -8,21 +8,21 @@ import { getProgressBar } from './utils.js';
 const mon = new CpuMonitor(1000);
 
 
+// EventEmitter rethrows an 'error' event that has no listener, so without
+// this a bad sample would kill the CLI instead of skipping a frame
+mon.on('error', (err: Error) => {
+    console.error(chalk.red(`cpumon: ${err.message}`));
+});
+
+
 mon.on('cpudata', (load: CpuInfo[]) => {
 
-    const diags = load.map(cpu => {
-        
-        if (typeof cpu.loadPercentage != 'number') {
-            throw new Error("loadPercentage must be a number!");
-        }
+    const symbol = '|';
 
-        const symbol = '|';
-
-        return getProgressBar(cpu.loadPercentage,  chalk.green(symbol));
-    });
+    const diags = load.map(cpu => getProgressBar(cpu.loadPercentage ?? 0, symbol));
 
     console.clear();
-    
+
     const fmt = {
         minimumIntegerDigits: 2,
         useGrouping: false

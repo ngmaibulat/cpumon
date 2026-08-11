@@ -1,25 +1,13 @@
 import chalk from "chalk";
 function getProgressBar(progress, symbol) {
-  if (progress < 0 || progress > 100) {
+  if (!Number.isFinite(progress) || progress < 0 || progress > 100) {
     throw new Error("getProgressBar(): progress should be in range of from 0 to 100");
   }
-  let res = "[";
-  for (let i = 0; i < progress; i++) {
-    res += symbol;
-  }
-  for (let i = progress; i < 100; i++) {
-    res += " ";
-  }
+  const filled = chalk.green(symbol.repeat(progress));
+  const blank = " ".repeat(100 - progress);
   const percent = chalk.yellowBright(`${progress}%`);
-  res += `${percent}]`;
-  return res;
-}
-function sleep(ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, ms);
-  });
+  return `[${filled}${blank}${percent}]`;
 }
 export {
-  getProgressBar,
-  sleep
+  getProgressBar
 };

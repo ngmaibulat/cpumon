@@ -1,16 +1,28 @@
 {
     "name": "cpumon",
-    "version": "0.0.12",
+    "version": "0.1.0",
     "description": "CPU Monitor Library and CLI tool",
     "main": "bin/CpuMonitor.js",
+    "types": "./bin/CpuMonitor.d.ts",
     "type": "module",
+    "exports": {
+        ".": {
+            "types": "./bin/CpuMonitor.d.ts",
+            "default": "./bin/CpuMonitor.js"
+        }
+    },
+    "files": [
+        "bin"
+    ],
+    "engines": {
+        "node": ">=18"
+    },
     "scripts": {
         "esbuild-help": "esbuild -h",
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "npm run build && node --test",
         "build-watch": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node --watch",
         "build": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node",
-        "build:types": "tsc -p tsc-types.json",
-        "commit": "git add . ; git commit -a -m 'minor fix'; git push"
+        "build:types": "tsc -p tsc-types.json"
     },
     "bin": {
         "cpumon": "bin/cpumon.js"
@@ -37,8 +49,8 @@
         "chalk": "^5.1.2"
     },
     "devDependencies": {
-        "@types/chalk": "^2.2.0",
         "@types/node": "^18.11.8",
-        "esbuild": "^0.15.12"
+        "esbuild": "^0.15.12",
+        "typescript": "^5.9.3"
     }
 }

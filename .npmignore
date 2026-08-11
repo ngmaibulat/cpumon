@@ -1,12 +1,10 @@
 src
+test
+examples
 
 tsconfig.json
 tsc-types.json
-test.js
 package-lock.json
-
-demo.js
-demo.d.ts
 
 # Logs
 logs

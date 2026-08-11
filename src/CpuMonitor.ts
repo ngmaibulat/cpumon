@@ -2,6 +2,15 @@ import os from 'os';
 import EventEmitter from 'events';
 
 
+export type CpuTimes = {
+    user: number;
+    nice: number;
+    sys: number;
+    idle: number;
+    irq: number;
+}
+
+
 export type CpuInfo = {
     model: string;
     idle: number;
@@ -12,12 +21,68 @@ export type CpuInfo = {
 }
 
 
+/**
+ * Convert one raw `os.cpus()` entry into a CpuInfo sample.
+ * Every field of `times` counts towards the total, so `nice` and `irq`
+ * are accounted for and a future Node release adding a field is picked up
+ * automatically. Load is everything that is not idle.
+ */
+export function toCpuInfo(model: string, times: CpuTimes): CpuInfo
+{
+    const total = Object.values(times).reduce((sum, ticks) => sum + ticks, 0);
+
+    return {
+        model,
+        idle: times.idle,
+        load: total - times.idle,
+        total,
+    };
+}
+
+
+export function getCpuInfo(): CpuInfo[]
+{
+    return os.cpus().map(item => toCpuInfo(item.model, item.times));
+}
+
+
+export function getCpuDiff(prev: CpuInfo[], current: CpuInfo[]): CpuInfo[]
+{
+    const res: CpuInfo[] = [];
+
+    if (prev.length != current.length) {
+        throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
+    }
+
+    for (let i=0; i<prev.length; i++ ) {
+        const p = prev[i];
+        const c = current[i];
+
+        const newitem: CpuInfo = {
+            model: p.model,
+            idle: c.idle - p.idle,
+            total: c.total - p.total,
+            load: c.load - p.load,
+        };
+
+        // a sampling interval shorter than one clock tick gives an empty
+        // window - report 0 rather than dividing by zero into NaN
+        newitem.loadRatio = newitem.total > 0 ? newitem.load / newitem.total : 0;
+        newitem.loadPercentage = Math.min(100, Math.max(0, Math.floor(newitem.loadRatio * 100)));
+
+        res.push(newitem);
+    }
+
+    return res;
+}
+
+
 export class CpuMonitor extends EventEmitter
 {
     ms: number;
-    intervalId: NodeJS.Timer;
+    intervalId: NodeJS.Timeout;
     current: Array<CpuInfo>;
-    
+
     constructor(ms: number)
     {
         super();
@@ -34,55 +99,36 @@ export class CpuMonitor extends EventEmitter
 
     getCpuInfo(): CpuInfo[]
     {
-        const cpus = os.cpus();
-
-        return cpus.map(item => {
-            const newitem = {
-                model: item.model,
-                idle: item.times.idle,
-                load: item.times.user + item.times.sys,
-                total: item.times.idle + item.times.user + item.times.sys,
-            }
-            // return item;
-            return newitem;
-        });
+        return getCpuInfo();
     }
 
 
-    getCpuDiff(prev: CpuInfo[], current: CpuInfo[])
+    getCpuDiff(prev: CpuInfo[], current: CpuInfo[]): CpuInfo[]
     {
-        let res = [];
-
-        if (prev.length != current.length) {
-            throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
-        }
-
-        for (let i=0; i<prev.length; i++ ) {
-            const p = prev[i];
-            const c = current[i];
-
-            const newitem: CpuInfo = {
-                model: p.model,
-                idle: c.idle - p.idle,
-                total: c.total - p.total,
-                load: c.load - p.load,           
-            };
-
-            newitem.loadRatio = newitem.load / newitem.total;
-            newitem.loadPercentage = Math.floor(newitem.loadRatio * 100);
-
-            res.push(newitem);
-        }
-
-        return res;
+        return getCpuDiff(prev, current);
     }
 
 
     measureCpu()
     {
-        const next: CpuInfo[] = this.getCpuInfo();
-        const load = this.getCpuDiff(this.current, next);
-        this.current = next;
-        this.emit('cpudata', load);
+        // this runs from setInterval, so anything thrown here would be an
+        // uncaught exception that takes down the host process
+        try {
+            const next: CpuInfo[] = getCpuInfo();
+
+            if (next.length !== this.current.length) {
+                // cores came or went (hotplug, cgroup change) - resync and
+                // skip this tick, the next one has a comparable baseline
+                this.current = next;
+                return;
+            }
+
+            const load = getCpuDiff(this.current, next);
+            this.current = next;
+            this.emit('cpudata', load);
+        }
+        catch (err) {
+            this.emit('error', err);
+        }
     }
 }
