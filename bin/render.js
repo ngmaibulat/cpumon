@@ -7,6 +7,8 @@ import { getLoadAverage } from "./collectors/loadavg.js";
 import { getMemoryInfo } from "./collectors/memory.js";
 import { getProgressBar } from "./utils.js";
 import { getVersion } from "./cli.js";
+import { bytes, formatUptime, gib, rate, shortId } from "./format.js";
+import { bytes as bytes2, rate as rate2 } from "./format.js";
 const BAR_SYMBOL = "|";
 const SPARKS = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588";
 const PANEL_WIDTH = 46;
@@ -27,37 +29,6 @@ function renderOverall(load) {
 }
 function renderJson(value) {
   return JSON.stringify(value);
-}
-function formatUptime(seconds) {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(seconds % 86400 / 3600);
-  const minutes = Math.floor(seconds % 3600 / 60);
-  const parts = [];
-  if (days > 0) {
-    parts.push(`${days}d`);
-  }
-  if (days > 0 || hours > 0) {
-    parts.push(`${hours}h`);
-  }
-  parts.push(`${minutes}m`);
-  return parts.join(" ");
-}
-function gib(bytes2) {
-  return (bytes2 / 1024 ** 3).toFixed(1);
-}
-const UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
-function bytes(value) {
-  let scaled = Math.abs(value);
-  let unit = 0;
-  while (scaled >= 1024 && unit < UNITS.length - 1) {
-    scaled /= 1024;
-    unit++;
-  }
-  const digits = unit === 0 ? 0 : 1;
-  return `${(value < 0 ? -scaled : scaled).toFixed(digits)} ${UNITS[unit]}`;
-}
-function rate(bytesPerSec) {
-  return `${bytes(bytesPerSec)}/s`;
 }
 function probeRow(label, probe, format) {
   if (isAvailable(probe)) {
@@ -171,10 +142,6 @@ function renderProcesses(probe) {
     ["r", "r", "r", "r", "l"]
   );
 }
-function shortId(id) {
-  const hex = id.match(/^(?:docker-|libpod-|crio-|cri-containerd-)([0-9a-f]{12})/);
-  return hex === null ? id : hex[1];
-}
 function renderContainers(probe) {
   if (!isAvailable(probe)) {
     return probeRow("Containers", probe, () => "") ?? chalk.gray("containers are not a concept on this platform");
@@ -242,10 +209,10 @@ function renderFetch(load, options = {}) {
   return lines.filter((line) => line !== null).join("\n");
 }
 export {
-  bytes,
+  bytes2 as bytes,
   fetchSnapshot,
   probeRow,
-  rate,
+  rate2 as rate,
   renderBars,
   renderContainers,
   renderDisk,

@@ -15,6 +15,15 @@ import {
   sampleSystem
 } from "./SystemMonitor.js";
 import {
+  bytes,
+  duration,
+  formatUptime,
+  gib,
+  percent,
+  rate,
+  shortId
+} from "./format.js";
+import {
   getMemoryInfo,
   osMemoryInfo,
   parseMeminfo,
@@ -43,6 +52,9 @@ import {
   parsePidStat,
   parsePidStatus,
   parseStatTotal,
+  selectProcesses,
+  sortNeedsRss,
+  sortProcesses,
   topProcesses
 } from "./collectors/process.js";
 import {
@@ -67,12 +79,15 @@ export {
   SystemMonitor,
   aggregateCpu,
   attachRss,
+  bytes,
   defaultMount,
   detectCgroupVersion,
   detectContainer,
   diffContainerCpu,
   diffNetwork,
   diffProcesses,
+  duration,
+  formatUptime,
   getContainerInfo,
   getCpuDiff,
   getCpuInfo,
@@ -81,6 +96,7 @@ export {
   getMemoryInfo,
   getNetworkCounters,
   getProcessCounters,
+  gib,
   isAvailable,
   listContainers,
   osMemoryInfo,
@@ -93,12 +109,18 @@ export {
   parsePidStatus,
   parseSelfCgroup,
   parseStatTotal,
+  percent,
+  rate,
   readCgroupCpu,
   readCgroupLimits,
   readMeminfo,
   readSelfCgroup,
   readSelfLimits,
   sampleSystem,
+  selectProcesses,
+  shortId,
+  sortNeedsRss,
+  sortProcesses,
   toCpuInfo,
   toDiskInfo,
   toLoadAverage,

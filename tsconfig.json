@@ -1,4 +1,13 @@
 {
+    /* The workspaces under packages/ each carry their own tsconfig that extends
+       this one - packages/cpumon-tui needs jsx settings this package must not
+       have. Without this exclude an editor would load their .tsx files into
+       this project, where the JSX has no factory configured. */
+    "exclude": [
+        "packages",
+        "node_modules",
+        "bin"
+    ],
     "compilerOptions": {
         /* Visit https://aka.ms/tsconfig to read more about this file */
 

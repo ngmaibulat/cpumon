@@ -59,7 +59,18 @@ test('the barrel re-exports every documented value', async () => {
         'parsePidStat',
         'parsePidStatus',
         'parseStatTotal',
+        'selectProcesses',
+        'sortNeedsRss',
+        'sortProcesses',
         'topProcesses',
+        // formatting
+        'bytes',
+        'duration',
+        'formatUptime',
+        'gib',
+        'percent',
+        'rate',
+        'shortId',
         // cgroups
         'detectCgroupVersion',
         'parseCgroupCpuStat',
@@ -91,6 +102,26 @@ test('the barrel stays free of the colour library', async () => {
     for (const name of Object.keys(mod)) {
         assert.ok(!name.startsWith('render'), `${name} should not be in the barrel`);
     }
+});
+
+
+test('the barrel exposes the same formatters as the ./format subpath', async () => {
+    const barrel = await import('../bin/index.js');
+    const direct = await import('../bin/format.js');
+
+    assert.equal(barrel.bytes, direct.bytes);
+    assert.equal(barrel.rate, direct.rate);
+});
+
+
+test('the format module pulls in nothing at all', async () => {
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(new URL('../bin/format.js', import.meta.url), 'utf8');
+
+    // the whole reason format.ts exists is that cpumon-tui can import it
+    // without dragging chalk or a collector along. an import statement here
+    // would quietly undo that.
+    assert.ok(!/^\s*import\s/m.test(source), 'bin/format.js must have no imports');
 });
 
 

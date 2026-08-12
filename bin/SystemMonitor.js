@@ -4,7 +4,7 @@ import { getDiskUsage } from "./collectors/disk.js";
 import { getLoadAverage } from "./collectors/loadavg.js";
 import { getMemoryInfo } from "./collectors/memory.js";
 import { diffNetwork, getNetworkCounters } from "./collectors/network.js";
-import { attachRss, diffProcesses, getProcessCounters, topProcesses } from "./collectors/process.js";
+import { diffProcesses, getProcessCounters, selectProcesses } from "./collectors/process.js";
 import { diffContainerCpu, listContainers } from "./collectors/container.js";
 const DEFAULT_COLLECTORS = ["cpu", "memory", "load"];
 function readBaseline(collect, options) {
@@ -131,10 +131,7 @@ class SystemMonitor extends EventEmitter {
           next.processes,
           (before, after) => ({
             available: true,
-            processes: attachRss(
-              topProcesses(diffProcesses(before, after), this.options.top ?? 10),
-              this.options
-            )
+            processes: selectProcesses(diffProcesses(before, after), this.options)
           })
         );
       }

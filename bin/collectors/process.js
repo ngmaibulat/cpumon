@@ -104,12 +104,44 @@ function diffProcesses(prev, next) {
 function topProcesses(loads, n) {
   return loads.slice(0, Math.max(0, n));
 }
+function sortNeedsRss(key) {
+  return key === "mem";
+}
+function sortProcesses(loads, key = "cpu", reverse = false) {
+  const direction = reverse ? -1 : 1;
+  const compare = (a, b) => {
+    switch (key) {
+      case "cpu":
+        return b.cpuRatio - a.cpuRatio;
+      case "mem":
+        return (b.rss ?? 0) - (a.rss ?? 0);
+      case "threads":
+        return b.threads - a.threads;
+      case "name":
+        return a.comm.localeCompare(b.comm);
+      case "pid":
+        return a.pid - b.pid;
+    }
+  };
+  return [...loads].sort((a, b) => {
+    const result = compare(a, b) * direction;
+    return result !== 0 ? result : a.pid - b.pid;
+  });
+}
 function attachRss(loads, options) {
   const root = procRoot(options);
   return loads.map((load) => {
     const result = readText(`${root}/${load.pid}/status`);
     return result.ok ? { ...load, rss: parsePidStatus(result.text).rss } : load;
   });
+}
+function selectProcesses(loads, options = {}) {
+  const key = options.sort ?? "cpu";
+  const n = options.top ?? 10;
+  if (sortNeedsRss(key)) {
+    return topProcesses(sortProcesses(attachRss(loads, options), key, options.sortReverse), n);
+  }
+  return attachRss(topProcesses(sortProcesses(loads, key, options.sortReverse), n), options);
 }
 export {
   attachRss,
@@ -118,5 +150,8 @@ export {
   parsePidStat,
   parsePidStatus,
   parseStatTotal,
+  selectProcesses,
+  sortNeedsRss,
+  sortProcesses,
   topProcesses
 };

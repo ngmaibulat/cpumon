@@ -28,6 +28,11 @@ import type { ProcessLoad } from './collectors/process.js';
 import type { ContainerInfo } from './collectors/container.js';
 import { getProgressBar } from './utils.js';
 import { getVersion } from './cli.js';
+import { bytes, formatUptime, gib, rate, shortId } from './format.js';
+
+// bytes/rate were exported from here before format.ts existed, and the CLI is
+// not the only caller - keep the old import path working
+export { bytes, rate } from './format.js';
 
 
 const BAR_SYMBOL = '|';
@@ -74,61 +79,6 @@ export function renderOverall(load: CpuInfo[]): string
 export function renderJson(value: unknown): string
 {
     return JSON.stringify(value);
-}
-
-
-function formatUptime(seconds: number): string
-{
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-
-    const parts: string[] = [];
-
-    if (days > 0) {
-        parts.push(`${days}d`);
-    }
-
-    if (days > 0 || hours > 0) {
-        parts.push(`${hours}h`);
-    }
-
-    parts.push(`${minutes}m`);
-
-    return parts.join(' ');
-}
-
-
-function gib(bytes: number): string
-{
-    return (bytes / 1024 ** 3).toFixed(1);
-}
-
-
-const UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
-
-
-/** auto-scaled size, for values whose magnitude is not known in advance */
-export function bytes(value: number): string
-{
-    let scaled = Math.abs(value);
-    let unit = 0;
-
-    while (scaled >= 1024 && unit < UNITS.length - 1) {
-        scaled /= 1024;
-        unit++;
-    }
-
-    // whole bytes never want a decimal point
-    const digits = unit === 0 ? 0 : 1;
-
-    return `${(value < 0 ? -scaled : scaled).toFixed(digits)} ${UNITS[unit]}`;
-}
-
-
-export function rate(bytesPerSec: number): string
-{
-    return `${bytes(bytesPerSec)}/s`;
 }
 
 
@@ -326,16 +276,6 @@ export function renderProcesses(probe: Probe<{ processes: ProcessLoad[] }>): str
         ]),
         ['r', 'r', 'r', 'r', 'l'],
     );
-}
-
-
-function shortId(id: string): string
-{
-    // docker-<64 hex>.scope is unreadable in a table and the first 12 characters
-    // are what every docker command shows
-    const hex = id.match(/^(?:docker-|libpod-|crio-|cri-containerd-)([0-9a-f]{12})/);
-
-    return hex === null ? id : hex[1];
 }
 
 

@@ -245,6 +245,68 @@ export function topProcesses(loads: ProcessLoad[], n: number): ProcessLoad[]
 }
 
 
+export type ProcessSortKey = 'cpu' | 'mem' | 'pid' | 'name' | 'threads';
+
+
+/**
+ * Whether a sort key can be applied before resident memory has been read.
+ *
+ * Everything diffProcesses() produces is already in hand, so cpu/pid/name/thread
+ * ordering is free. 'mem' is not: rss arrives from a second file per process,
+ * and ordering by a field that is undefined on every row would silently degrade
+ * to "whatever order the cut left them in". The caller has to pay for a full
+ * attachRss() pass before the top-N cut, which is why this is a question worth
+ * asking rather than something sortProcesses() hides.
+ */
+export function sortNeedsRss(key: ProcessSortKey): boolean
+{
+    return key === 'mem';
+}
+
+
+/**
+ * Order a diffed process list, most interesting first.
+ *
+ * "Most interesting" is per key rather than uniformly descending: the numeric
+ * keys mean "biggest first", but nobody asking to sort by name wants to start
+ * at z, and pid ascending is roughly boot order. `reverse` flips whichever
+ * direction the key defaults to.
+ *
+ * pid is the tiebreaker throughout. It is the only field guaranteed unique, and
+ * without it a machine full of identically-named workers reshuffles its rows
+ * every tick for no reason the user can see.
+ */
+export function sortProcesses(
+    loads: ProcessLoad[],
+    key: ProcessSortKey = 'cpu',
+    reverse = false,
+): ProcessLoad[]
+{
+    const direction = reverse ? -1 : 1;
+
+    const compare = (a: ProcessLoad, b: ProcessLoad): number => {
+        switch (key) {
+            case 'cpu':
+                return b.cpuRatio - a.cpuRatio;
+            case 'mem':
+                return (b.rss ?? 0) - (a.rss ?? 0);
+            case 'threads':
+                return b.threads - a.threads;
+            case 'name':
+                return a.comm.localeCompare(b.comm);
+            case 'pid':
+                return a.pid - b.pid;
+        }
+    };
+
+    return [...loads].sort((a, b) => {
+        const result = compare(a, b) * direction;
+
+        return result !== 0 ? result : a.pid - b.pid;
+    });
+}
+
+
 /**
  * Fill in resident memory, which needs a second file per process.
  *
@@ -262,4 +324,39 @@ export function attachRss(loads: ProcessLoad[], options?: CollectorOptions): Pro
             ? { ...load, rss: parsePidStatus(result.text).rss }
             : load;
     });
+}
+
+
+export type SelectOptions = CollectorOptions & {
+    /** how many rows to keep; default 10 */
+    top?: number;
+    /** the column the cut is taken on; default 'cpu' */
+    sort?: ProcessSortKey;
+    /** flip the sort direction before the cut, so `top` keeps the other end */
+    sortReverse?: boolean;
+};
+
+
+/**
+ * Sort, cut to the top N, and fill in resident memory - in whichever order is
+ * both correct and cheapest.
+ *
+ * The order matters. attachRss() costs a second file read per process, so it
+ * belongs *after* the cut. The exception is a sort on resident memory itself:
+ * cutting first would rank the rows by a field none of them has yet, every
+ * comparison would tie, and the fallback ordering would hand back the busiest
+ * processes presented as the largest - wrong, and wrong in a way that looks
+ * entirely plausible on screen. So a memory sort pays for a full pass over
+ * every process, and no other key does.
+ */
+export function selectProcesses(loads: ProcessLoad[], options: SelectOptions = {}): ProcessLoad[]
+{
+    const key = options.sort ?? 'cpu';
+    const n = options.top ?? 10;
+
+    if (sortNeedsRss(key)) {
+        return topProcesses(sortProcesses(attachRss(loads, options), key, options.sortReverse), n);
+    }
+
+    return attachRss(topProcesses(sortProcesses(loads, key, options.sortReverse), n), options);
 }

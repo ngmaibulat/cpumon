@@ -17,6 +17,7 @@ import type { MemoryInfo } from './collectors/memory.js';
 import type { NetworkRates } from './collectors/network.js';
 import type { ProcessLoad } from './collectors/process.js';
 import type { ContainerInfo } from './collectors/container.js';
+export { bytes, rate } from './format.js';
 export declare function renderBars(load: CpuInfo[]): string;
 export declare function renderOverall(load: CpuInfo[]): string;
 /**
@@ -27,9 +28,6 @@ export declare function renderOverall(load: CpuInfo[]): string;
  * a format that composes with every view, not a view of its own.
  */
 export declare function renderJson(value: unknown): string;
-/** auto-scaled size, for values whose magnitude is not known in advance */
-export declare function bytes(value: number): string;
-export declare function rate(bytesPerSec: number): string;
 /**
  * One label/value row for a probe, or null when the row should not appear.
  *

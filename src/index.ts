@@ -57,6 +57,18 @@ export type {
 
 export type { CollectorOptions } from './collectors/proc.js';
 
+// the one part of the presentation layer that is chalk-free, so it can live
+// here; 'cpumon/format' reaches the same functions without loading a collector
+export {
+    bytes,
+    duration,
+    formatUptime,
+    gib,
+    percent,
+    rate,
+    shortId,
+} from './format.js';
+
 export {
     getMemoryInfo,
     osMemoryInfo,
@@ -109,6 +121,9 @@ export {
     parsePidStat,
     parsePidStatus,
     parseStatTotal,
+    selectProcesses,
+    sortNeedsRss,
+    sortProcesses,
     topProcesses,
 } from './collectors/process.js';
 
@@ -116,6 +131,8 @@ export type {
     ProcessCounters,
     ProcessLoad,
     ProcessSnapshot,
+    ProcessSortKey,
+    SelectOptions,
 } from './collectors/process.js';
 
 export {

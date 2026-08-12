@@ -21,7 +21,7 @@ import type { DiskInfo } from './collectors/disk.js';
 import type { LoadAverage } from './collectors/loadavg.js';
 import type { MemoryInfo } from './collectors/memory.js';
 import type { NetworkRates } from './collectors/network.js';
-import type { ProcessLoad } from './collectors/process.js';
+import type { ProcessLoad, ProcessSortKey } from './collectors/process.js';
 import type { ContainerInfo } from './collectors/container.js';
 import type { CollectorOptions } from './collectors/proc.js';
 export type CollectorName = 'cpu' | 'memory' | 'load' | 'disk' | 'network' | 'process' | 'container';
@@ -38,6 +38,10 @@ export type SystemMonitorOptions = CollectorOptions & {
     mount?: string;
     /** how many processes to keep and fetch resident memory for; default 10 */
     top?: number;
+    /** which column the top-N cut is taken on; default 'cpu' */
+    sort?: ProcessSortKey;
+    /** flip the sort direction before the cut, so `top` keeps the other end */
+    sortReverse?: boolean;
     /** do not let the sampling timer hold the process open */
     unref?: boolean;
 };

@@ -28,8 +28,8 @@ import { getMemoryInfo } from './collectors/memory.js';
 import type { MemoryInfo } from './collectors/memory.js';
 import { diffNetwork, getNetworkCounters } from './collectors/network.js';
 import type { NetworkCounters, NetworkRates } from './collectors/network.js';
-import { attachRss, diffProcesses, getProcessCounters, topProcesses } from './collectors/process.js';
-import type { ProcessLoad, ProcessSnapshot } from './collectors/process.js';
+import { diffProcesses, getProcessCounters, selectProcesses } from './collectors/process.js';
+import type { ProcessLoad, ProcessSnapshot, ProcessSortKey } from './collectors/process.js';
 import { diffContainerCpu, listContainers } from './collectors/container.js';
 import type { ContainerInfo } from './collectors/container.js';
 import type { CollectorOptions } from './collectors/proc.js';
@@ -52,6 +52,10 @@ export type SystemMonitorOptions = CollectorOptions & {
     mount?: string;
     /** how many processes to keep and fetch resident memory for; default 10 */
     top?: number;
+    /** which column the top-N cut is taken on; default 'cpu' */
+    sort?: ProcessSortKey;
+    /** flip the sort direction before the cut, so `top` keeps the other end */
+    sortReverse?: boolean;
     /** do not let the sampling timer hold the process open */
     unref?: boolean;
 };
@@ -288,10 +292,7 @@ export class SystemMonitor extends EventEmitter
                     next.processes,
                     (before, after) => ({
                         available: true,
-                        processes: attachRss(
-                            topProcesses(diffProcesses(before, after), this.options.top ?? 10),
-                            this.options,
-                        ),
+                        processes: selectProcesses(diffProcesses(before, after), this.options),
                     }),
                 );
             }
