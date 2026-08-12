@@ -91,6 +91,23 @@ const CORE_HISTORY = 128;
 /** a machine with more cores than this gets a sparkline strip, not a graph each */
 const MAX_CORES = 256;
 
+/**
+ * Per-interface history.
+ *
+ * The network panel shows one interface at a time, so it needs that
+ * interface's own series - graphing the machine-wide total under a label
+ * naming one NIC would be a plain misstatement. A container host can have
+ * dozens of veth pairs, hence the cap and the smaller depth: 64 interfaces at
+ * 256 samples is about a megabyte, and anything past that is not being looked
+ * at anyway.
+ */
+const INTERFACE_HISTORY = 256;
+
+const MAX_INTERFACES = 64;
+
+/** shared, and never written to - seriesFor() hands this back for an unknown name */
+const EMPTY_SERIES = { rx: new Ring(1), tx: new Ring(1) };
+
 
 export class SnapshotStore
 {
@@ -105,6 +122,9 @@ export class SnapshotStore
 
     /** one per core, reallocated when the core count changes */
     cores: Ring[] = [];
+
+    /** one pair per interface, by name; created on first sight */
+    readonly interfaces = new Map<string, { rx: Ring; tx: Ring }>();
 
     /** how many monitors have been spawned; the restart-debouncing test reads this */
     spawns = 0;
@@ -220,6 +240,11 @@ export class SnapshotStore
             ring.clear();
         }
 
+        for (const series of this.interfaces.values()) {
+            series.rx.clear();
+            series.tx.clear();
+        }
+
         this.#publish({ ticks: this.#state.ticks + 1 });
     }
 
@@ -318,9 +343,11 @@ export class SnapshotStore
             let tx = 0;
 
             for (const nic of snapshot.network.interfaces) {
+                this.#recordInterface(nic.name, nic.rxBytesPerSec, nic.txBytesPerSec);
+
                 // loopback is almost always the loudest interface and almost
-                // never the interesting one; summing it in flattens everything
-                // else against the top of the graph
+                // never the interesting one; summing it into the machine-wide
+                // series flattens everything else against the top of the graph
                 if (nic.name === 'lo') {
                     continue;
                 }
@@ -332,6 +359,35 @@ export class SnapshotStore
             this.rings.rx.push(rx);
             this.rings.tx.push(tx);
         }
+    }
+
+    #recordInterface(name: string, rx: number, tx: number): void
+    {
+        let series = this.interfaces.get(name);
+
+        if (series === undefined) {
+            if (this.interfaces.size >= MAX_INTERFACES) {
+                return;
+            }
+
+            series = { rx: new Ring(INTERFACE_HISTORY), tx: new Ring(INTERFACE_HISTORY) };
+            this.interfaces.set(name, series);
+        }
+
+        series.rx.push(rx);
+        series.tx.push(tx);
+    }
+
+    /**
+     * The history for one interface, or a pair of empty rings.
+     *
+     * Empty rather than null so a caller never has to branch: an interface
+     * that has just appeared draws as a blank graph, which is the truth, and
+     * Ring already left-pads rather than inventing zeros.
+     */
+    seriesFor(name: string): { rx: Ring; tx: Ring }
+    {
+        return this.interfaces.get(name) ?? EMPTY_SERIES;
     }
 
     #recordCores(cores: { loadPercentage?: number }[]): void

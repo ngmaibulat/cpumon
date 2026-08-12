@@ -12,7 +12,7 @@
  */
 
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
-import { useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
 import { useStore, useStoreState } from './hooks/useStore.js';
@@ -27,10 +27,13 @@ import { Footer } from './panels/Footer.js';
 import { Header } from './panels/Header.js';
 import { HelpOverlay } from './panels/HelpOverlay.js';
 import { MemoryPanel } from './panels/MemoryPanel.js';
+import { NetworkPanel } from './panels/NetworkPanel.js';
+import { ProcessPanel } from './panels/ProcessPanel.js';
+import { FilterInput } from './ui/FilterInput.js';
 import { Panel } from './ui/Panel.js';
 import { resolveGraphStyle } from './term/capabilities.js';
 import type { Capabilities } from './term/capabilities.js';
-import type { PanelId } from './state/types.js';
+import type { PanelId, UiState } from './state/types.js';
 
 
 export type AppProps = {
@@ -51,6 +54,18 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
     const state = useStoreState();
 
     const [ui, dispatch] = useReducer(reduce, initialUi(intervalMs, initialTheme, initialGraph));
+
+    // The reducer cannot know how many processes there are or how many rows
+    // the table has - both depend on data and on layout. The panel reports
+    // them and the reducer clamps itself, so a list that shrinks under a
+    // stationary cursor moves the cursor without needing a keypress, and there
+    // is still only one copy of the state for a keypress to act on.
+    const [matchCount, setMatchCount] = useState(0);
+
+    const onMetrics = useCallback((rowCount: number, windowRows: number) => {
+        setMatchCount(rowCount);
+        dispatch({ type: 'clamp', rowCount, windowRows });
+    }, []);
 
     useInput((input, key) => {
         const action = resolve(input, key, ui);
@@ -129,12 +144,19 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
                                         width={rect.width}
                                         height={rect.height}
                                         focused={rect.panel === ui.focus}
+                                        ui={ui}
+                                        onMetrics={onMetrics}
                                     />
                                 ))}
                             </Box>
                         ))}
                 </Box>
-                <Footer width={columns} message={ui.message} note={layout.note} />
+                {ui.filtering
+                    // the bar replaces the footer rather than adding a row: a
+                    // layout that grows by one line the moment you start typing
+                    // moves the row out from under the cursor
+                    ? <FilterInput value={ui.filter} width={columns} matches={matchCount} />
+                    : <Footer width={columns} message={ui.message} note={layout.note} />}
             </Box>
         </StyleProvider>
     );
@@ -146,10 +168,12 @@ type PanelForProps = {
     width: number;
     height: number;
     focused: boolean;
+    ui: UiState;
+    onMetrics: (rowCount: number, windowRows: number) => void;
 };
 
 
-function PanelFor({ panel, width, height, focused }: PanelForProps)
+function PanelFor({ panel, width, height, focused, ui, onMetrics }: PanelForProps)
 {
     switch (panel) {
         case 'cpu':
@@ -161,10 +185,35 @@ function PanelFor({ panel, width, height, focused }: PanelForProps)
         case 'disk':
             return <DiskPanel width={width} height={height} focused={focused} />;
 
-        // the remaining panels arrive with their milestone; until then their
-        // slot is simply not claimed
         case 'network':
+            return (
+                <NetworkPanel
+                    width={width}
+                    height={height}
+                    focused={focused}
+                    index={ui.interfaceIndex}
+                    bits={ui.bits}
+                />
+            );
+
         case 'process':
+            return (
+                <ProcessPanel
+                    width={width}
+                    height={height}
+                    focused={focused}
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    sort={ui.sort}
+                    sortReverse={ui.sortReverse}
+                    filter={ui.filter}
+                    expanded={ui.expanded}
+                    onMetrics={onMetrics}
+                />
+            );
+
+        // containers arrive with their milestone; until then the slot shows a
+        // frame in the right place rather than nothing
         case 'container':
             return <Placeholder panel={panel} width={width} height={height} focused={focused} />;
     }
@@ -173,7 +222,7 @@ function PanelFor({ panel, width, height, focused }: PanelForProps)
 
 /** a real frame in the right place, so the layout can be judged before the
  *  panel that fills it exists */
-function Placeholder({ panel, width, height, focused }: PanelForProps)
+function Placeholder({ panel, width, height, focused }: Omit<PanelForProps, 'ui' | 'onMetrics'>)
 {
     return (
         <Panel title={panel.toUpperCase()} width={width} height={height} focused={focused}>

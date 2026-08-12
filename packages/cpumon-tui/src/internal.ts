@@ -88,3 +88,9 @@ export type { Layout, Rect } from './hooks/useLayout.js';
 export { Footer } from './panels/Footer.js';
 export { Header } from './panels/Header.js';
 export { HelpOverlay } from './panels/HelpOverlay.js';
+
+export { NetworkPanel, orderInterfaces } from './panels/NetworkPanel.js';
+export { ProcessPanel, matches } from './panels/ProcessPanel.js';
+export { FilterInput } from './ui/FilterInput.js';
+
+export { App } from './app.js';

@@ -226,6 +226,70 @@ test('loopback is excluded from the network totals', () => {
 });
 
 
+test('each interface gets its own history', () => {
+    // the network panel names one interface, so it has to graph that one -
+    // drawing the machine-wide sum under an eth0 label is a plain misstatement
+    const { store, monitor } = makeStore();
+
+    monitor().emit('sample', sample({
+        network: {
+            available: true,
+            elapsedMs: 1000,
+            interfaces: [
+                { name: 'eth0', rxBytesPerSec: 100, txBytesPerSec: 200 },
+                { name: 'wlan0', rxBytesPerSec: 7, txBytesPerSec: 9 },
+            ],
+        },
+    }));
+
+    assert.equal(store.seriesFor('eth0').rx.last, 100);
+    assert.equal(store.seriesFor('eth0').tx.last, 200);
+    assert.equal(store.seriesFor('wlan0').rx.last, 7);
+});
+
+
+test('loopback keeps its own series even though the total excludes it', () => {
+    // it is excluded from the aggregate because it drowns everything else, not
+    // because nobody ever wants to look at it
+    const { store, monitor } = makeStore();
+
+    monitor().emit('sample', sample({
+        network: {
+            available: true,
+            elapsedMs: 1000,
+            interfaces: [{ name: 'lo', rxBytesPerSec: 5000, txBytesPerSec: 5000 }],
+        },
+    }));
+
+    assert.equal(store.seriesFor('lo').rx.last, 5000);
+    assert.equal(store.rings.rx.last, 0);
+});
+
+
+test('an interface nobody has seen yet reads as empty rather than throwing', () => {
+    const { store } = makeStore();
+
+    assert.equal(store.seriesFor('tun0').rx.length, 0);
+});
+
+
+test('reset clears the per-interface history too', () => {
+    const { store, monitor } = makeStore();
+
+    monitor().emit('sample', sample({
+        network: {
+            available: true,
+            elapsedMs: 1000,
+            interfaces: [{ name: 'eth0', rxBytesPerSec: 100, txBytesPerSec: 200 }],
+        },
+    }));
+
+    store.reset();
+
+    assert.equal(store.seriesFor('eth0').rx.length, 0);
+});
+
+
 test('an unavailable network probe records nothing at all', () => {
     // a zero would be a claim about the machine; absence is the truth
     const { store, monitor } = makeStore();

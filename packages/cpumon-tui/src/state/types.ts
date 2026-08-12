@@ -86,7 +86,18 @@ export type Action =
     | { type: 'interface'; delta: 1 | -1 }
     | { type: 'toggle-bits' }
     | { type: 'escape' }
-    | { type: 'message'; text: string | null };
+    | { type: 'message'; text: string | null }
+    /**
+     * Bring selection and scroll into range.
+     *
+     * Dispatched by the process panel, which is the only thing that knows how
+     * many rows there are and how many fit. It is an action rather than a
+     * correction applied around the reducer so that there is exactly one piece
+     * of state: with two, a keypress would act on the unclamped copy while the
+     * table rendered the clamped one, and `G` followed by `k` would move from
+     * a row that was never displayed.
+     */
+    | { type: 'clamp'; rowCount: number; windowRows: number };
 
 
 export const MIN_INTERVAL_MS = 100;

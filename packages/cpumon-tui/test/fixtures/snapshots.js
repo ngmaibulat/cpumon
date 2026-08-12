@@ -74,7 +74,7 @@ export const snapshot = (over = {}) => {
  * so a fake needs both. Rings are real - they are pure and cheap, and faking
  * them would mean the graph assertions tested the fake.
  */
-export function fakeStore(Ring, { snapshot: snap = snapshot(), history = [], cores = [] } = {})
+export function fakeStore(Ring, { snapshot: snap = snapshot(), history = [], cores = [], ticks } = {})
 {
     const ring = values => {
         const r = new Ring(512);
@@ -86,10 +86,14 @@ export function fakeStore(Ring, { snapshot: snap = snapshot(), history = [], cor
         return r;
     };
 
+    // built once and handed back by reference. useSyncExternalStore compares
+    // the result of getSnapshot by identity, so a fixture that rebuilt this
+    // object per call would re-render forever - which presents as "Maximum
+    // update depth exceeded" from somewhere entirely unrelated.
     const state = {
         snapshot: snap,
         error: null,
-        ticks: snap === null ? 0 : 1,
+        ticks: ticks ?? (snap === null ? 0 : 1),
         intervalMs: 1000,
         paused: false,
     };
@@ -104,6 +108,8 @@ export function fakeStore(Ring, { snapshot: snap = snapshot(), history = [], cor
             load: ring(history),
         },
         cores: cores.map(values => ring(values)),
+        interfaces: new Map(),
+        seriesFor: () => ({ rx: ring(history), tx: ring(history) }),
         spawns: 1,
         getSnapshot: () => state,
         subscribe: () => () => {},

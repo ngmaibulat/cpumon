@@ -6,10 +6,11 @@
  * keyboard testable without a pty.
  *
  * The reducer does not know how many rows the process table has - that depends
- * on data and on the panel's height, neither of which belongs in here. Instead
- * it clamps optimistically and the panel corrects it via `clamp()` once it
- * knows. Selection therefore cannot be trusted to be in range mid-reduce, only
- * after the panel has seen it.
+ * on data and on the panel's height, neither of which belongs in here. It
+ * clamps what it can (never below zero) and the panel dispatches 'clamp' with
+ * the real figures once it knows them. Selection is therefore briefly out of
+ * range between a keypress and the next render, which is why 'move-to last'
+ * can set an index no list could contain.
  */
 
 import { PANEL_ORDER } from './types.js';
@@ -178,6 +179,9 @@ export function reduce(state: UiState, action: Action): UiState
 
         case 'message':
             return { ...state, message: action.text };
+
+        case 'clamp':
+            return clamp(state, action.rowCount, action.windowRows);
 
         case 'quit':
             return state;
