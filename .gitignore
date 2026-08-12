@@ -92,6 +92,10 @@ dist
 # vuepress build output
 .vuepress/dist
 
+# vitepress docs site - the bare `dist` entry above does not match these
+docs/.vitepress/cache
+docs/.vitepress/dist
+
 # Serverless directories
 .serverless/
 

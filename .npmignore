@@ -1,6 +1,8 @@
 src
 test
 examples
+docs
+scripts
 
 tsconfig.json
 tsc-types.json

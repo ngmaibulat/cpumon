@@ -1,9 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-  return value;
-};
 import os from "os";
 import EventEmitter from "events";
 function toCpuInfo(model, times) {
@@ -18,6 +12,28 @@ function toCpuInfo(model, times) {
 function getCpuInfo() {
   return os.cpus().map((item) => toCpuInfo(item.model, item.times));
 }
+function withLoadRatio(info) {
+  const loadRatio = info.total > 0 ? info.load / info.total : 0;
+  return {
+    ...info,
+    loadRatio,
+    loadPercentage: Math.min(100, Math.max(0, Math.floor(loadRatio * 100)))
+  };
+}
+function aggregateCpu(cores) {
+  if (cores.length === 0) {
+    throw new Error("aggregateCpu() needs at least one core sample");
+  }
+  let idle = 0;
+  let load = 0;
+  let total = 0;
+  for (const core of cores) {
+    idle += core.idle;
+    load += core.load;
+    total += core.total;
+  }
+  return withLoadRatio({ model: cores[0].model, idle, load, total });
+}
 function getCpuDiff(prev, current) {
   const res = [];
   if (prev.length != current.length) {
@@ -26,31 +42,65 @@ function getCpuDiff(prev, current) {
   for (let i = 0; i < prev.length; i++) {
     const p = prev[i];
     const c = current[i];
-    const newitem = {
+    res.push(withLoadRatio({
       model: p.model,
       idle: c.idle - p.idle,
       total: c.total - p.total,
       load: c.load - p.load
-    };
-    newitem.loadRatio = newitem.total > 0 ? newitem.load / newitem.total : 0;
-    newitem.loadPercentage = Math.min(100, Math.max(0, Math.floor(newitem.loadRatio * 100)));
-    res.push(newitem);
+    }));
   }
   return res;
 }
 class CpuMonitor extends EventEmitter {
-  constructor(ms) {
+  ms;
+  /** null while stopped */
+  intervalId;
+  current;
+  shouldUnref;
+  constructor(options) {
     super();
-    __publicField(this, "ms");
-    __publicField(this, "intervalId");
-    __publicField(this, "current");
-    this.ms = ms;
+    const opts = typeof options === "number" ? { intervalMs: options } : options;
+    this.ms = opts.intervalMs;
+    this.shouldUnref = opts.unref ?? false;
+    this.current = this.getCpuInfo();
+    this.intervalId = null;
+    this.start();
+  }
+  /**
+   * Begin sampling. Safe to call on an already-running monitor, and safe to
+   * call again after stopMonitor() - the baseline is re-read so the first
+   * sample after a restart measures the new window, not the gap.
+   */
+  start() {
+    if (this.intervalId !== null) {
+      return;
+    }
     this.current = this.getCpuInfo();
     this.intervalId = setInterval(() => this.measureCpu(), this.ms);
+    if (this.shouldUnref) {
+      this.intervalId.unref();
+    }
   }
+  /**
+   * Stop sampling.
+   *
+   * Changed in 0.2.0: this no longer calls removeAllListeners(). Detaching
+   * handlers the caller registered was surprising, made the monitor
+   * single-use, and silently dropped their 'error' listener.
+   */
   stopMonitor() {
+    if (this.intervalId === null) {
+      return;
+    }
     clearInterval(this.intervalId);
-    this.removeAllListeners();
+    this.intervalId = null;
+  }
+  /** Alias for stopMonitor(), matching the usual Node resource vocabulary. */
+  close() {
+    this.stopMonitor();
+  }
+  get running() {
+    return this.intervalId !== null;
   }
   getCpuInfo() {
     return getCpuInfo();
@@ -75,7 +125,9 @@ class CpuMonitor extends EventEmitter {
 }
 export {
   CpuMonitor,
+  aggregateCpu,
   getCpuDiff,
   getCpuInfo,
-  toCpuInfo
+  toCpuInfo,
+  withLoadRatio
 };

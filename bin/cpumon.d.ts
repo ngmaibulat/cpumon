@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-export {};
 /**
- * todo:
- * json colored output
- * cli params: table vs json output, count times vs watch mode
- * rest api
+ * The `cpumon` binary.
+ *
+ * Thin by design: parsing lives in cli.ts, formatting in render.ts, and this
+ * file only wires argv to a monitor and decides when to stop.
  */
+export {};

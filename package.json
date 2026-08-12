@@ -1,15 +1,24 @@
 {
     "name": "cpumon",
-    "version": "0.1.0",
-    "description": "CPU Monitor Library and CLI tool",
-    "main": "bin/CpuMonitor.js",
-    "types": "./bin/CpuMonitor.d.ts",
+    "version": "0.4.0",
+    "description": "System monitor library and CLI tool: CPU, memory, disk, network, processes and containers, as live output or JSON",
+    "main": "bin/index.js",
+    "types": "./bin/index.d.ts",
     "type": "module",
     "exports": {
         ".": {
+            "types": "./bin/index.d.ts",
+            "default": "./bin/index.js"
+        },
+        "./cpu": {
             "types": "./bin/CpuMonitor.d.ts",
             "default": "./bin/CpuMonitor.js"
-        }
+        },
+        "./system": {
+            "types": "./bin/SystemMonitor.d.ts",
+            "default": "./bin/SystemMonitor.js"
+        },
+        "./package.json": "./package.json"
     },
     "files": [
         "bin"
@@ -20,9 +29,12 @@
     "scripts": {
         "esbuild-help": "esbuild -h",
         "test": "npm run build && node --test",
-        "build-watch": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node --watch",
-        "build": "esbuild src/*.ts --outdir=bin --format=esm --target=es2017 --platform=node",
-        "build:types": "tsc -p tsc-types.json"
+        "build-watch": "node scripts/build.mjs --watch",
+        "build": "node scripts/build.mjs",
+        "build:types": "tsc -p tsc-types.json",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "vitepress preview docs"
     },
     "bin": {
         "cpumon": "bin/cpumon.js"
@@ -49,8 +61,9 @@
         "chalk": "^5.1.2"
     },
     "devDependencies": {
-        "@types/node": "^18.11.8",
-        "esbuild": "^0.15.12",
-        "typescript": "^5.9.3"
+        "@types/node": "^18.19.130",
+        "esbuild": "^0.28.2",
+        "typescript": "^5.9.3",
+        "vitepress": "^1.6.4"
     }
 }
