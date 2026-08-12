@@ -10,6 +10,7 @@ import { render } from 'ink';
 import { createElement } from 'react';
 
 import { App } from './app.js';
+import { getVersion } from './cli-args.js';
 import { StoreProvider } from './hooks/useStore.js';
 import { SnapshotStore } from './state/store.js';
 import { detectCapabilities } from './term/capabilities.js';
@@ -59,7 +60,14 @@ export async function runTui(options: TuiOptions = {}): Promise<number>
 
     const instance = render(
         createElement(StoreProvider, { value: store },
-            createElement(App, { capabilities, allowKill: options.allowKill === true })),
+            createElement(App, {
+                capabilities,
+                version: getVersion(),
+                allowKill: options.allowKill === true,
+                theme: options.theme ?? 'auto',
+                graph: options.graph ?? 'auto',
+                intervalMs: options.intervalMs ?? 1000,
+            })),
         {
             // ink enters and leaves the alternate screen itself, including on
             // unmount. Hand-rolling it means racing ink's own final frame,

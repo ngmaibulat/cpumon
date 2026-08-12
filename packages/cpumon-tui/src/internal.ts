@@ -74,3 +74,17 @@ export { DiskPanel } from './panels/DiskPanel.js';
 export { MemoryPanel } from './panels/MemoryPanel.js';
 
 export { StoreProvider } from './hooks/useStore.js';
+
+export { resolve, helpSections, ALL_BINDINGS, GLOBAL_BINDINGS, PANEL_BINDINGS } from './state/keymap.js';
+export type { Binding, KeyState } from './state/keymap.js';
+
+export { clamp, reduce } from './state/reducer.js';
+export { PANEL_ORDER, initialUi } from './state/types.js';
+export type { Action, PanelId, UiState } from './state/types.js';
+
+export { computeLayout, isAbsent, presentPanels } from './hooks/useLayout.js';
+export type { Layout, Rect } from './hooks/useLayout.js';
+
+export { Footer } from './panels/Footer.js';
+export { Header } from './panels/Header.js';
+export { HelpOverlay } from './panels/HelpOverlay.js';
