@@ -25,3 +25,8 @@ export type { Capabilities, Refusal } from './term/capabilities.js';
 export { installLifecycle } from './term/lifecycle.js';
 
 export { buildHelp, parseCliArgs } from './cli-args.js';
+
+export { Ring } from './render/ring.js';
+
+export { SnapshotStore } from './state/store.js';
+export type { MonitorLike, MonitorOptions, StoreOptions, StoreState } from './state/store.js';

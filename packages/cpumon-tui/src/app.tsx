@@ -1,24 +1,27 @@
 /**
  * The layout root.
  *
- * Skeleton for now - the panels arrive over the next few milestones. What is
- * already load-bearing is the shape: one useInput at the root, an explicit
- * width AND height on the root Box, and overflow hidden.
+ * Still a scaffold - the panels arrive next - but the shape is already
+ * load-bearing. One useInput at the root, an explicit width AND height on the
+ * root Box, and overflow hidden.
  *
- * The explicit height is not a detail. Without it Ink lets content size the
+ * The explicit height is not a detail. Without it ink lets content size the
  * frame, and a frame one line taller than the terminal scrolls it - which in
  * the alternate screen means the top line is gone for good and every subsequent
  * frame is drawn one row off. Clamping here is what makes a layout bug show up
- * as a missing row instead of a corrupted screen.
+ * as a missing row rather than a corrupted screen.
  */
 
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
 
+import { useStore, useStoreState } from './hooks/useStore.js';
+import { DebugPanel } from './panels/DebugPanel.js';
 import type { Capabilities } from './term/capabilities.js';
 
 
 export type AppProps = {
     capabilities: Capabilities;
+    allowKill: boolean;
 };
 
 
@@ -26,15 +29,48 @@ export type AppProps = {
 export const MIN_COLUMNS = 40;
 export const MIN_ROWS = 10;
 
+/** faster than this and the cost of sampling shows up in the sample */
+const MIN_INTERVAL_MS = 100;
+const MAX_INTERVAL_MS = 10_000;
+
 
 export function App({ capabilities }: AppProps)
 {
     const { columns, rows } = useWindowSize();
     const { exit } = useApp();
+    const store = useStore();
+    const { paused, intervalMs } = useStoreState();
 
     useInput((input, key) => {
         if (input === 'q' || (key.ctrl && input === 'c')) {
             exit();
+
+            return;
+        }
+
+        if (input === ' ') {
+            store.setPaused(!paused);
+
+            return;
+        }
+
+        // doubling rather than stepping: the useful range spans two orders of
+        // magnitude, and a linear step would need thirty presses to cross it
+        if (input === '+' || input === '=') {
+            store.setIntervalMs(Math.max(MIN_INTERVAL_MS, Math.round(intervalMs / 2)));
+
+            return;
+        }
+
+        if (input === '-') {
+            store.setIntervalMs(Math.min(MAX_INTERVAL_MS, intervalMs * 2));
+
+            return;
+        }
+
+        if (input === 'r') {
+            store.reset();
+            store.setPaused(false);
         }
     });
 
@@ -44,13 +80,18 @@ export function App({ capabilities }: AppProps)
 
     return (
         <Box flexDirection="column" width={columns} height={rows} overflow="hidden">
-            <Text bold>cpumon-tui</Text>
-            <Box flexGrow={1}>
+            <Box justifyContent="space-between">
+                <Text bold>cpumon-tui</Text>
                 <Text dimColor>
-                    {`${columns}x${rows} · ${capabilities.graph} graphs · colour level ${capabilities.colorLevel}`}
+                    {`${columns}x${rows} · ${capabilities.graph} · colour ${capabilities.colorLevel}`}
                 </Text>
             </Box>
-            <Text dimColor>q quit</Text>
+            <Box flexGrow={1} flexDirection="column" overflow="hidden">
+                <DebugPanel />
+            </Box>
+            <Text dimColor wrap="truncate-end">
+                {'q quit · space pause · +/- interval · r reset'}
+            </Text>
         </Box>
     );
 }
