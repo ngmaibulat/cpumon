@@ -65,3 +65,12 @@ export { Panel } from './ui/Panel.js';
 export { Sparkline } from './ui/Sparkline.js';
 export { Table } from './ui/Table.js';
 export { Unavailable } from './ui/Unavailable.js';
+
+export { StackBar, allocate } from './ui/StackBar.js';
+export type { Segment } from './ui/StackBar.js';
+
+export { CpuPanel, coreLayout } from './panels/CpuPanel.js';
+export { DiskPanel } from './panels/DiskPanel.js';
+export { MemoryPanel } from './panels/MemoryPanel.js';
+
+export { StoreProvider } from './hooks/useStore.js';

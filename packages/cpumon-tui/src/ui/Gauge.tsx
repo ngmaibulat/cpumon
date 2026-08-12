@@ -28,27 +28,65 @@ export type GaugeProps = {
     value?: string;
     /** width reserved for the label, so a column of gauges lines up */
     labelWidth?: number;
+    /**
+     * Width reserved for the value.
+     *
+     * Without it a grid of gauges has ragged bars, because a core at 100% has
+     * a four-character figure and one at 0% has two - so the bar beside it is
+     * two cells longer, and a column of them looks broken rather than tidy.
+     */
+    valueWidth?: number;
 };
 
 
-export const Gauge = memo(function Gauge({ label, ratio, width, ramp, value, labelWidth }: GaugeProps)
+export const Gauge = memo(function Gauge({
+    label,
+    ratio,
+    width,
+    ramp,
+    value,
+    labelWidth,
+    valueWidth,
+}: GaugeProps)
 {
     const { theme, unicode } = useStyle();
 
-    const shown = value ?? `${Math.round(clamp01(ratio) * 100)}%`;
+    const percentage = `${Math.round(clamp01(ratio) * 100)}%`;
+
+    // an empty label takes no room at all, rather than a stray leading space
     const labelCells = labelWidth ?? label.length;
+    const prefix = labelCells === 0 ? '' : label.padEnd(labelCells);
+
+    const pad = (text: string) => (valueWidth === undefined ? text : text.padStart(valueWidth));
+
+    /**
+     * A byte figure cut short does not read as an approximation, it reads as a
+     * different unit: `16.0 G…` is not "about 16 GiB", it is unreadable. So a
+     * value that will not fit is replaced by the percentage, which always fits
+     * and is never wrong - rather than truncated.
+     */
+    const rich = pad(value ?? percentage);
+    const room = width - prefix.length - (prefix === '' ? 0 : 1);
+    const shown = rich.length <= room ? rich : pad(percentage);
 
     // brackets make the bar's extent unambiguous when it is nearly empty, which
     // is otherwise indistinguishable from a bar that failed to draw
-    const chrome = labelCells + 1 + 2 + 1 + shown.length;
-    const barWidth = Math.max(0, width - chrome);
+    const barWidth = Math.max(0, room - shown.length - 3);
+
+    const labelNode = prefix === ''
+        ? null
+        : <Text color={theme.label} wrap="truncate-end">{prefix}</Text>;
 
     if (barWidth < 1) {
-        // no room for a bar; the number is the part worth keeping
+        // no room for a bar; the figure is the part worth keeping. The space
+        // leads the value rather than trailing the label, because ink trims
+        // trailing whitespace off a Text and the two would run together.
         return (
             <Box width={width} overflow="hidden">
-                <Text color={theme.label} wrap="truncate-end">{`${label.padEnd(labelCells)} `}</Text>
-                <Text color={rampStep(ramp, ratio)} wrap="truncate-end">{shown}</Text>
+                {labelNode}
+                <Text color={rampStep(ramp, ratio)} wrap="truncate-end">
+                    {`${prefix === '' ? '' : ' '}${shown}`}
+                </Text>
             </Box>
         );
     }
@@ -57,8 +95,8 @@ export const Gauge = memo(function Gauge({ label, ratio, width, ramp, value, lab
 
     return (
         <Box width={width} overflow="hidden">
-            <Text color={theme.label} wrap="truncate-end">{`${label.padEnd(labelCells)} `}</Text>
-            <Text color={theme.muted}>[</Text>
+            {labelNode}
+            <Text color={theme.muted}>{`${prefix === '' ? '' : ' '}[`}</Text>
             <Text color={rampStep(ramp, ratio)} wrap="truncate-end">{bar}</Text>
             <Text color={theme.muted}>]</Text>
             <Text color={theme.value} wrap="truncate-end">{` ${shown}`}</Text>

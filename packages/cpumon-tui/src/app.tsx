@@ -15,7 +15,9 @@
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
 
 import { useStore, useStoreState } from './hooks/useStore.js';
-import { DebugPanel } from './panels/DebugPanel.js';
+import { CpuPanel } from './panels/CpuPanel.js';
+import { DiskPanel } from './panels/DiskPanel.js';
+import { MemoryPanel } from './panels/MemoryPanel.js';
 import type { Capabilities } from './term/capabilities.js';
 
 
@@ -86,8 +88,17 @@ export function App({ capabilities }: AppProps)
                     {`${columns}x${rows} · ${capabilities.graph} · colour ${capabilities.colorLevel}`}
                 </Text>
             </Box>
-            <Box flexGrow={1} flexDirection="column" overflow="hidden">
-                <DebugPanel />
+            <Box flexGrow={1} overflow="hidden">
+                {/* a placeholder split until useLayout arrives in the next
+                    milestone; the panels themselves are already responsive */}
+                <CpuPanel width={Math.floor(columns / 2)} height={rows - 2} />
+                <Box flexDirection="column" width={columns - Math.floor(columns / 2)} overflow="hidden">
+                    <MemoryPanel width={columns - Math.floor(columns / 2)} height={Math.floor((rows - 2) / 2)} />
+                    <DiskPanel
+                        width={columns - Math.floor(columns / 2)}
+                        height={(rows - 2) - Math.floor((rows - 2) / 2)}
+                    />
+                </Box>
             </Box>
             <Text dimColor wrap="truncate-end">
                 {'q quit · space pause · +/- interval · r reset'}

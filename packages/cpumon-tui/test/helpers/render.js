@@ -12,7 +12,7 @@
 import React from 'react';
 import { renderToString } from 'ink';
 
-import { DEFAULT_THEME, MONO_THEME, StyleProvider } from '../../dist/internal.js';
+import { DEFAULT_THEME, MONO_THEME, StoreProvider, StyleProvider } from '../../dist/internal.js';
 
 
 export const h = React.createElement;
@@ -53,7 +53,11 @@ export function draw(node, options = {})
 
     const style = { theme, graph, unicode, continuousColor };
 
-    return renderToString(h(StyleProvider, { value: style }, node), { columns });
+    const tree = options.store === undefined
+        ? node
+        : h(StoreProvider, { value: options.store }, node);
+
+    return renderToString(h(StyleProvider, { value: style }, tree), { columns });
 }
 
 
