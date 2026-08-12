@@ -1,10 +1,8 @@
 {
-    /* The workspaces under packages/ each carry their own tsconfig that extends
-       this one - packages/cpumon-tui needs jsx settings this package must not
-       have. Without this exclude an editor would load their .tsx files into
-       this project, where the JSX has no factory configured. */
+    /* bin/ is this package's build output, and it sits inside the project root.
+       Without excluding it, tsc would type-check the emitted .js/.d.ts back in
+       alongside their sources. */
     "exclude": [
-        "packages",
         "node_modules",
         "bin"
     ],

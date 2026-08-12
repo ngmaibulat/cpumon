@@ -1,77 +1,32 @@
 {
-    "name": "cpumon",
-    "version": "0.5.0",
-    "description": "System monitor library and CLI tool: CPU, memory, disk, network, processes and containers, as live output or JSON",
-    "main": "bin/index.js",
-    "types": "./bin/index.d.ts",
+    "name": "cpumon-monorepo",
+    "private": true,
+    "description": "Workspace root for cpumon and cpumon-tui. Not published; see packages/",
     "type": "module",
-    "exports": {
-        ".": {
-            "types": "./bin/index.d.ts",
-            "default": "./bin/index.js"
-        },
-        "./cpu": {
-            "types": "./bin/CpuMonitor.d.ts",
-            "default": "./bin/CpuMonitor.js"
-        },
-        "./system": {
-            "types": "./bin/SystemMonitor.d.ts",
-            "default": "./bin/SystemMonitor.js"
-        },
-        "./format": {
-            "types": "./bin/format.d.ts",
-            "default": "./bin/format.js"
-        },
-        "./package.json": "./package.json"
-    },
-    "files": [
-        "bin"
-    ],
-    "engines": {
-        "node": ">=18"
-    },
     "workspaces": [
         "packages/*"
     ],
     "scripts": {
-        "esbuild-help": "esbuild -h",
-        "test": "npm run build && node --test \"test/**/*.test.js\"",
-        "test:all": "npm test && npm test --workspaces --if-present",
-        "build-watch": "node scripts/build.mjs --watch",
-        "build": "node scripts/build.mjs",
-        "build:types": "tsc -p tsc-types.json",
+        "build": "npm run build --workspaces --if-present",
+        "test": "npm test --workspaces --if-present",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "cpumon": "npm run build -w cpumon && node packages/cpumon/bin/cpumon.js",
+        "tui": "npm run build -w cpumon && npm run build -w cpumon-tui && node packages/cpumon-tui/dist/cli.js",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs"
-    },
-    "bin": {
-        "cpumon": "bin/cpumon.js"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ngmaibulat/cpumon.git"
     },
-    "keywords": [
-        "CPU",
-        "System",
-        "Resource",
-        "Monitor",
-        "Sysmon",
-        "OS"
-    ],
     "author": "Aibulat",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/ngmaibulat/cpumon/issues"
     },
     "homepage": "https://github.com/ngmaibulat/cpumon#readme",
-    "dependencies": {
-        "chalk": "^5.1.2"
-    },
     "devDependencies": {
-        "@types/node": "^18.19.130",
-        "esbuild": "^0.28.2",
-        "typescript": "^5.9.3",
         "vitepress": "^1.6.4"
     }
 }

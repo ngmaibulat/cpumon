@@ -1,0 +1,65 @@
+{
+    "name": "cpumon-tui",
+    "version": "0.1.0",
+    "description": "Full-screen terminal dashboard for cpumon: CPU, memory, disk, network, processes and containers",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./types/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./types/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "bin": {
+        "cpumon-tui": "./dist/cli.js"
+    },
+    "files": [
+        "dist",
+        "types"
+    ],
+    "engines": {
+        "node": ">=22"
+    },
+    "scripts": {
+        "build": "node scripts/build.mjs",
+        "build-watch": "node scripts/build.mjs --watch",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "test": "npm run build && node --test \"test/**/*.test.js\"",
+        "prepack": "npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ngmaibulat/cpumon.git",
+        "directory": "packages/cpumon-tui"
+    },
+    "keywords": [
+        "TUI",
+        "dashboard",
+        "btop",
+        "top",
+        "htop",
+        "CPU",
+        "System",
+        "Monitor",
+        "ink"
+    ],
+    "author": "Aibulat",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ngmaibulat/cpumon/issues"
+    },
+    "homepage": "https://github.com/ngmaibulat/cpumon#readme",
+    "dependencies": {
+        "cpumon": "^0.5.0",
+        "ink": "^7.1.1",
+        "react": "^19.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "@types/react": "^19.2.0",
+        "esbuild": "^0.28.2",
+        "typescript": "^5.9.3"
+    }
+}

@@ -1,0 +1,38 @@
+{
+    /* Inherits the parent package's settings, three of which matter here:
+
+       - module/moduleResolution NodeNext, so relative imports keep the `./x.js`
+         suffix convention the rest of the repo uses. Both tsc and esbuild map
+         `./Panel.js` to Panel.tsx, so nothing diverges.
+       - verbatimModuleSyntax, which forces `import type` discipline. Free under
+         jsx: react-jsx, because React is never imported as a value.
+       - skipLibCheck, which is what keeps @types/react compiling against a lib
+         with no DOM. Its event types reference DOM interfaces the parent's
+         `lib: ["ES2022", "ScriptHost"]` does not provide. Turning that flag off
+         "for cleanliness" breaks this package. */
+    "extends": "../cpumon/tsconfig.json",
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        /* the hand-written public declarations, which src/ imports its option
+           types from rather than keeping a second copy */
+        "types/**/*.d.ts"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        /* esbuild does the emitting; tsc is only ever run as a type checker */
+        "noEmit": true,
+        "outDir": "./dist",
+        "jsx": "react-jsx",
+        "jsxImportSource": "react",
+        "lib": [
+            "ES2023"
+        ],
+        "types": [
+            "node"
+        ]
+    }
+}
