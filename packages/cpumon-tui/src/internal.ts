@@ -30,3 +30,38 @@ export { Ring } from './render/ring.js';
 
 export { SnapshotStore } from './state/store.js';
 export type { MonitorLike, MonitorOptions, StoreOptions, StoreState } from './state/store.js';
+
+export { BLOCKS, HALF_BLOCKS, meter, quantise, rasterise, rasteriseInverted, spark } from './render/blocks.js';
+export type { Raster } from './render/blocks.js';
+
+export { meterAscii, rasteriseAscii } from './render/ascii.js';
+
+export { brailleCapacity, brailleChar, dotMask, rasteriseBraille } from './render/braille.js';
+
+export { AutoScale, niceMax } from './render/scale.js';
+
+export { GAP, cell, fit, row } from './render/columns.js';
+export type { Column, Fitted } from './render/columns.js';
+
+export {
+    ANSI16_THEME,
+    DEFAULT_THEME,
+    MONO_THEME,
+    THEME_ORDER,
+    nextTheme,
+    resolveTheme,
+} from './theme/index.js';
+export type { Ramp, Theme } from './theme/index.js';
+
+export { rampLerp, rampStep, rowColor } from './theme/ramp.js';
+
+export { StyleProvider } from './hooks/useTheme.js';
+export type { DrawStyle } from './hooks/useTheme.js';
+
+export { Gauge } from './ui/Gauge.js';
+export { Graph, graphCapacity } from './ui/Graph.js';
+export { Loading } from './ui/Loading.js';
+export { Panel } from './ui/Panel.js';
+export { Sparkline } from './ui/Sparkline.js';
+export { Table } from './ui/Table.js';
+export { Unavailable } from './ui/Unavailable.js';

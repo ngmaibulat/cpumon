@@ -26,7 +26,7 @@
         "build": "node scripts/build.mjs",
         "build-watch": "node scripts/build.mjs --watch",
         "typecheck": "tsc --noEmit -p tsconfig.json",
-        "test": "npm run build && node --test \"test/**/*.test.js\"",
+        "test": "npm run build && FORCE_COLOR=3 node --test \"test/**/*.test.js\"",
         "prepack": "npm run build"
     },
     "repository": {
