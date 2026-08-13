@@ -1,4 +1,5 @@
-const UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
+// src/format.ts
+var UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
 function bytes(value) {
   let scaled = Math.abs(value);
   let unit = 0;
@@ -37,10 +38,10 @@ function percent(ratio, digits = 0) {
   return `${(ratio * 100).toFixed(digits)}%`;
 }
 function duration(ms) {
-  if (ms < 1e3) {
+  if (ms < 1000) {
     return `${Math.round(ms)}ms`;
   }
-  const seconds = ms / 1e3;
+  const seconds = ms / 1000;
   if (seconds < 60) {
     return `${seconds.toFixed(1)}s`;
   }
@@ -51,11 +52,11 @@ function duration(ms) {
   return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 export {
-  bytes,
-  duration,
-  formatUptime,
-  gib,
-  percent,
+  shortId,
   rate,
-  shortId
+  percent,
+  gib,
+  formatUptime,
+  duration,
+  bytes
 };

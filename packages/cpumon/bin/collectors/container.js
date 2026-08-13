@@ -1,3 +1,4 @@
+// src/collectors/container.ts
 import { existsSync, readdirSync } from "node:fs";
 import { unavailable } from "../types.js";
 import {
@@ -7,7 +8,7 @@ import {
   readSelfCgroup
 } from "./cgroup.js";
 import { sysfsRoot } from "./proc.js";
-const PATH_MARKERS = [
+var PATH_MARKERS = [
   [/kubepods/, "kubernetes"],
   [/libpod-|libpod_/, "podman"],
   [/docker[-/]/, "docker"],
@@ -32,7 +33,7 @@ function detectContainer(options) {
   if (existsSync("/run/.containerenv")) {
     return { available: true, inContainer: true, runtime: "podman", detail: "/run/.containerenv" };
   }
-  if (process.env.KUBERNETES_SERVICE_HOST !== void 0) {
+  if (process.env.KUBERNETES_SERVICE_HOST !== undefined) {
     return { available: true, inContainer: true, runtime: "kubernetes", detail: "KUBERNETES_SERVICE_HOST" };
   }
   const self = readSelfCgroup(options);
@@ -77,14 +78,14 @@ function getContainerInfo(options) {
     cpu: cpuValues
   };
 }
-const CONTAINER_DIRS = [
+var CONTAINER_DIRS = [
   /^docker-[0-9a-f]{12,}\.scope$/,
   /^libpod-[0-9a-f]{12,}\.scope$/,
   /^crio-[0-9a-f]{12,}\.scope$/,
   /^cri-containerd-[0-9a-f]{12,}\.scope$/,
   /^lxc\.payload\..+$/
 ];
-const SEARCH_ROOTS = ["", "/system.slice", "/machine.slice", "/kubepods.slice", "/docker"];
+var SEARCH_ROOTS = ["", "/system.slice", "/machine.slice", "/kubepods.slice", "/docker"];
 function isContainerDir(name) {
   return CONTAINER_DIRS.some((pattern) => pattern.test(name));
 }
@@ -141,13 +142,13 @@ function listContainers(options) {
 }
 function diffContainerCpu(prev, next, elapsedMs) {
   const deltaUsec = Math.max(0, next.usageUsec - prev.usageUsec);
-  const windowUsec = elapsedMs * 1e3;
+  const windowUsec = elapsedMs * 1000;
   const cpuRatio = windowUsec > 0 ? deltaUsec / windowUsec : 0;
   return { cpuRatio, cpuPercentage: cpuRatio * 100 };
 }
 export {
-  detectContainer,
-  diffContainerCpu,
+  listContainers,
   getContainerInfo,
-  listContainers
+  diffContainerCpu,
+  detectContainer
 };

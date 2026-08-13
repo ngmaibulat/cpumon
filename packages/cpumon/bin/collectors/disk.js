@@ -1,3 +1,4 @@
+// src/collectors/disk.ts
 import { statfsSync } from "node:fs";
 import path from "node:path";
 import { unavailable } from "../types.js";
@@ -33,7 +34,7 @@ function getDiskUsage(mount = defaultMount()) {
   }
 }
 export {
-  defaultMount,
+  toDiskInfo,
   getDiskUsage,
-  toDiskInfo
+  defaultMount
 };

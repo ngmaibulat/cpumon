@@ -1,3 +1,4 @@
+// src/render.ts
 import os from "os";
 import chalk from "chalk";
 import { aggregateCpu } from "./CpuMonitor.js";
@@ -9,10 +10,10 @@ import { getProgressBar } from "./utils.js";
 import { getVersion } from "./cli.js";
 import { bytes, formatUptime, gib, rate, shortId } from "./format.js";
 import { bytes as bytes2, rate as rate2 } from "./format.js";
-const BAR_SYMBOL = "|";
-const SPARKS = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588";
-const PANEL_WIDTH = 46;
-const LABEL_WIDTH = 10;
+var BAR_SYMBOL = "|";
+var SPARKS = "▁▂▃▄▅▆▇█";
+var PANEL_WIDTH = 46;
+var LABEL_WIDTH = 10;
 function renderBars(load) {
   const fmt = {
     minimumIntegerDigits: 2,
@@ -21,7 +22,8 @@ function renderBars(load) {
   return load.map((cpu, i) => {
     const label = (i + 1).toLocaleString("en-US", fmt);
     return `${label} ${getProgressBar(cpu.loadPercentage ?? 0, BAR_SYMBOL)}`;
-  }).join("\n");
+  }).join(`
+`);
 }
 function renderOverall(load) {
   const overall = aggregateCpu(load);
@@ -37,12 +39,12 @@ function probeRow(label, probe, format) {
   if (probe.reason === "not-applicable") {
     return null;
   }
-  const detail = probe.detail === void 0 ? "" : chalk.gray(` \u2014 ${probe.detail}`);
+  const detail = probe.detail === undefined ? "" : chalk.gray(` — ${probe.detail}`);
   return row(label, `${chalk.gray(`unavailable (${probe.reason})`)}${detail}`);
 }
 function compactBar(percent, width) {
   const filled = Math.round(percent / 100 * width);
-  return `[${chalk.green("\u2588".repeat(filled))}${chalk.gray("\u2591".repeat(width - filled))}]`;
+  return `[${chalk.green("█".repeat(filled))}${chalk.gray("░".repeat(width - filled))}]`;
 }
 function sparkline(load) {
   return load.map((cpu) => {
@@ -65,7 +67,8 @@ function renderMemory(memory) {
     lines.push(row("Swap", `${bytes(memory.swapUsed)} of ${bytes(memory.swapTotal)} (${swapPercent}%)`));
   }
   lines.push(row("Source", memory.source === "os" ? chalk.gray("os (cache counted as used)") : chalk.gray(memory.source)));
-  return lines.join("\n");
+  return lines.join(`
+`);
 }
 function renderLoad(probe) {
   if (!isAvailable(probe)) {
@@ -76,7 +79,8 @@ function renderLoad(probe) {
   return [
     row("Loadavg", figures),
     row("Per core", `${perCore}  ${chalk.gray(`over ${probe.cores} cores`)}`)
-  ].join("\n");
+  ].join(`
+`);
 }
 function renderDisk(probe) {
   if (!isAvailable(probe)) {
@@ -88,7 +92,8 @@ function renderDisk(probe) {
     row("Usage", `${compactBar(disk.usedPercentage, 16)} ${chalk.yellowBright(`${disk.usedPercentage}%`)}`),
     row("Used", `${bytes(disk.used)} of ${bytes(disk.size)}`),
     row("Available", bytes(disk.available))
-  ].join("\n");
+  ].join(`
+`);
 }
 function table(headers, rows, align = []) {
   const widths = headers.map((header, i) => Math.max(header.length, ...rows.map((cells) => (cells[i] ?? "").length)));
@@ -96,7 +101,8 @@ function table(headers, rows, align = []) {
   return [
     line(headers, (text) => chalk.cyan(text)),
     ...rows.map((cells) => line(cells, (text) => text))
-  ].join("\n");
+  ].join(`
+`);
 }
 function renderNetwork(probe) {
   if (!isAvailable(probe)) {
@@ -111,17 +117,13 @@ function renderNetwork(probe) {
     }
     return b.rxBytesPerSec + b.txBytesPerSec - (a.rxBytesPerSec + a.txBytesPerSec);
   });
-  return table(
-    ["IFACE", "RX/s", "TX/s", "RX total", "TX total"],
-    sorted.map((item) => [
-      item.name,
-      rate(item.rxBytesPerSec),
-      rate(item.txBytesPerSec),
-      bytes(item.rxBytes),
-      bytes(item.txBytes)
-    ]),
-    ["l", "r", "r", "r", "r"]
-  );
+  return table(["IFACE", "RX/s", "TX/s", "RX total", "TX total"], sorted.map((item) => [
+    item.name,
+    rate(item.rxBytesPerSec),
+    rate(item.txBytesPerSec),
+    bytes(item.rxBytes),
+    bytes(item.txBytes)
+  ]), ["l", "r", "r", "r", "r"]);
 }
 function renderProcesses(probe) {
   if (!isAvailable(probe)) {
@@ -130,17 +132,13 @@ function renderProcesses(probe) {
   if (probe.processes.length === 0) {
     return chalk.gray("no processes with a full sampling window yet");
   }
-  return table(
-    ["PID", "%CPU", "RSS", "THR", "COMMAND"],
-    probe.processes.map((item) => [
-      String(item.pid),
-      item.cpuPercentage.toFixed(1),
-      item.rss === void 0 ? "-" : bytes(item.rss),
-      String(item.threads),
-      item.comm
-    ]),
-    ["r", "r", "r", "r", "l"]
-  );
+  return table(["PID", "%CPU", "RSS", "THR", "COMMAND"], probe.processes.map((item) => [
+    String(item.pid),
+    item.cpuPercentage.toFixed(1),
+    item.rss === undefined ? "-" : bytes(item.rss),
+    String(item.threads),
+    item.comm
+  ]), ["r", "r", "r", "r", "l"]);
 }
 function renderContainers(probe) {
   if (!isAvailable(probe)) {
@@ -152,19 +150,16 @@ function renderContainers(probe) {
   const rows = probe.containers.map((item) => [
     shortId(item.id),
     item.runtime,
-    item.cpuPercentage === void 0 ? "-" : item.cpuPercentage.toFixed(1),
+    item.cpuPercentage === undefined ? "-" : item.cpuPercentage.toFixed(1),
     item.limits.cpuLimitCores === null ? "unlimited" : `${item.limits.cpuLimitCores}`,
     bytes(item.limits.memoryCurrent),
     item.limits.memoryMax === null ? "unlimited" : bytes(item.limits.memoryMax)
   ]);
-  const body = table(
-    ["CONTAINER", "RUNTIME", "%CPU", "CPUS", "MEM", "LIMIT"],
-    rows,
-    ["l", "l", "r", "r", "r", "r"]
-  );
+  const body = table(["CONTAINER", "RUNTIME", "%CPU", "CPUS", "MEM", "LIMIT"], rows, ["l", "l", "r", "r", "r", "r"]);
   if (probe.scope === "namespaced") {
     return `${body}
-${chalk.gray("\nrunning inside a container: only this cgroup is visible")}`;
+${chalk.gray(`
+running inside a container: only this cgroup is visible`)}`;
   }
   return body;
 }
@@ -192,36 +187,36 @@ function renderFetch(load, options = {}) {
   const memory = getMemoryInfo();
   const lines = [
     chalk.bold(`cpumon ${getVersion()}`),
-    chalk.gray("\u2500".repeat(PANEL_WIDTH)),
+    chalk.gray("─".repeat(PANEL_WIDTH)),
     row("CPU", load[0]?.model ?? "unknown"),
     row("Cores", String(load.length)),
     row("Arch", os.arch()),
     row("Platform", `${os.platform()} ${os.release()}`),
     row("Uptime", formatUptime(os.uptime())),
     row("Memory", `${gib(memory.used)} / ${gib(memory.total)} GiB (${memory.usedPercentage}%)`),
-    // a machine with no swap configured has nothing to say about it
     memory.swapTotal > 0 ? row("Swap", `${gib(memory.swapUsed)} / ${gib(memory.swapTotal)} GiB`) : null,
     probeRow("Disk", getDiskUsage(options.mount), (disk) => `${gib(disk.disk.used)} / ${gib(disk.disk.size)} GiB (${disk.disk.usedPercentage}%) on ${disk.disk.mount}`),
     probeRow("Loadavg", getLoadAverage(), (avg) => `${avg.one.toFixed(2)} ${avg.five.toFixed(2)} ${avg.fifteen.toFixed(2)}  (${avg.onePerCore.toFixed(2)} per core)`),
     row("Load", `${compactBar(percent, 16)} ${chalk.yellowBright(`${percent}%`)}`),
     row("Per-core", chalk.green(sparkline(load)))
   ];
-  return lines.filter((line) => line !== null).join("\n");
+  return lines.filter((line) => line !== null).join(`
+`);
 }
 export {
-  bytes2 as bytes,
-  fetchSnapshot,
-  probeRow,
-  rate2 as rate,
-  renderBars,
-  renderContainers,
-  renderDisk,
-  renderFetch,
-  renderJson,
-  renderLoad,
-  renderMemory,
-  renderNetwork,
-  renderOverall,
+  table,
   renderProcesses,
-  table
+  renderOverall,
+  renderNetwork,
+  renderMemory,
+  renderLoad,
+  renderJson,
+  renderFetch,
+  renderDisk,
+  renderContainers,
+  renderBars,
+  rate2 as rate,
+  probeRow,
+  fetchSnapshot,
+  bytes2 as bytes
 };

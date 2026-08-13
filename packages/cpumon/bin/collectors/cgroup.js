@@ -1,7 +1,8 @@
+// src/collectors/cgroup.ts
 import { statSync } from "node:fs";
 import { unavailable } from "../types.js";
 import { firstNumber, parseKeyValue, procRoot, readText, sysfsRoot, toNumber } from "./proc.js";
-const V1_UNLIMITED = 9223372036854772e3;
+var V1_UNLIMITED = 9223372036854772000;
 function detectCgroupVersion(options) {
   try {
     statSync(`${sysfsRoot(options)}/cgroup.controllers`);
@@ -11,7 +12,8 @@ function detectCgroupVersion(options) {
   }
 }
 function parseSelfCgroup(text) {
-  const lines = text.split("\n").filter((line) => line.trim() !== "");
+  const lines = text.split(`
+`).filter((line) => line.trim() !== "");
   for (const line of lines) {
     const [hierarchy, controllers, ...rest] = line.split(":");
     const path = rest.join(":");
@@ -21,7 +23,7 @@ function parseSelfCgroup(text) {
   }
   for (const line of lines) {
     const [, controllers, ...rest] = line.split(":");
-    if (controllers !== void 0 && controllers.split(",").includes("cpu")) {
+    if (controllers !== undefined && controllers.split(",").includes("cpu")) {
       return { version: 1, path: rest.join(":") };
     }
   }
@@ -109,8 +111,7 @@ function readCgroupCpu(dir, version) {
   }
   return {
     available: true,
-    // v1 reports nanoseconds; everything downstream expects microseconds
-    usageUsec: usage / 1e3,
+    usageUsec: usage / 1000,
     userUsec: 0,
     systemUsec: 0,
     nrPeriods: 0,
@@ -140,13 +141,13 @@ function readSelfCgroup(options) {
   return parsed === null ? unavailable("parse-error", "self/cgroup had no usable line") : { available: true, ...parsed };
 }
 export {
-  detectCgroupVersion,
-  parseCgroupCpuStat,
-  parseCpuMax,
-  parseMemoryMax,
-  parseSelfCgroup,
-  readCgroupCpu,
-  readCgroupLimits,
+  readSelfLimits,
   readSelfCgroup,
-  readSelfLimits
+  readCgroupLimits,
+  readCgroupCpu,
+  parseSelfCgroup,
+  parseMemoryMax,
+  parseCpuMax,
+  parseCgroupCpuStat,
+  detectCgroupVersion
 };

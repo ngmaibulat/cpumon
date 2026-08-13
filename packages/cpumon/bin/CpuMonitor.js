@@ -1,3 +1,4 @@
+// src/CpuMonitor.ts
 import os from "os";
 import EventEmitter from "events";
 function toCpuInfo(model, times) {
@@ -39,7 +40,7 @@ function getCpuDiff(prev, current) {
   if (prev.length != current.length) {
     throw new Error("Arrays of same lengths should be supplied to function call: getCpuDiff()");
   }
-  for (let i = 0; i < prev.length; i++) {
+  for (let i = 0;i < prev.length; i++) {
     const p = prev[i];
     const c = current[i];
     res.push(withLoadRatio({
@@ -51,9 +52,9 @@ function getCpuDiff(prev, current) {
   }
   return res;
 }
+
 class CpuMonitor extends EventEmitter {
   ms;
-  /** null while stopped */
   intervalId;
   current;
   shouldUnref;
@@ -66,11 +67,6 @@ class CpuMonitor extends EventEmitter {
     this.intervalId = null;
     this.start();
   }
-  /**
-   * Begin sampling. Safe to call on an already-running monitor, and safe to
-   * call again after stopMonitor() - the baseline is re-read so the first
-   * sample after a restart measures the new window, not the gap.
-   */
   start() {
     if (this.intervalId !== null) {
       return;
@@ -81,13 +77,6 @@ class CpuMonitor extends EventEmitter {
       this.intervalId.unref();
     }
   }
-  /**
-   * Stop sampling.
-   *
-   * Changed in 0.2.0: this no longer calls removeAllListeners(). Detaching
-   * handlers the caller registered was surprising, made the monitor
-   * single-use, and silently dropped their 'error' listener.
-   */
   stopMonitor() {
     if (this.intervalId === null) {
       return;
@@ -95,7 +84,6 @@ class CpuMonitor extends EventEmitter {
     clearInterval(this.intervalId);
     this.intervalId = null;
   }
-  /** Alias for stopMonitor(), matching the usual Node resource vocabulary. */
   close() {
     this.stopMonitor();
   }
@@ -124,10 +112,10 @@ class CpuMonitor extends EventEmitter {
   }
 }
 export {
-  CpuMonitor,
-  aggregateCpu,
-  getCpuDiff,
-  getCpuInfo,
+  withLoadRatio,
   toCpuInfo,
-  withLoadRatio
+  getCpuInfo,
+  getCpuDiff,
+  aggregateCpu,
+  CpuMonitor
 };

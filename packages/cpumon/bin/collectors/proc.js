@@ -1,9 +1,10 @@
+// src/collectors/proc.ts
 import { readFileSync } from "node:fs";
 import { unavailable } from "../types.js";
-const IS_LINUX = process.platform === "linux";
-const DEFAULT_PROC_ROOT = "/proc";
-const DEFAULT_SYSFS_ROOT = "/sys/fs/cgroup";
-const CLOCK_TICKS = 100;
+var IS_LINUX = process.platform === "linux";
+var DEFAULT_PROC_ROOT = "/proc";
+var DEFAULT_SYSFS_ROOT = "/sys/fs/cgroup";
+var CLOCK_TICKS = 100;
 function procRoot(options) {
   return options?.procRoot ?? DEFAULT_PROC_ROOT;
 }
@@ -36,8 +37,9 @@ function readText(path) {
   }
 }
 function parseKeyValue(text, separator = ":") {
-  const fields = /* @__PURE__ */ new Map();
-  for (const line of text.split("\n")) {
+  const fields = new Map;
+  for (const line of text.split(`
+`)) {
     const at = line.indexOf(separator);
     if (at === -1) {
       continue;
@@ -50,7 +52,7 @@ function parseKeyValue(text, separator = ":") {
   return fields;
 }
 function toNumber(raw) {
-  if (raw === void 0) {
+  if (raw === undefined) {
     return null;
   }
   const trimmed = raw.trim();
@@ -64,16 +66,16 @@ function firstNumber(raw) {
   return toNumber(raw?.trim().split(/\s+/)[0]);
 }
 export {
-  CLOCK_TICKS,
-  DEFAULT_PROC_ROOT,
-  DEFAULT_SYSFS_ROOT,
-  IS_LINUX,
-  clockTicks,
-  errnoToUnavailable,
-  firstNumber,
-  parseKeyValue,
-  procRoot,
-  readText,
+  toNumber,
   sysfsRoot,
-  toNumber
+  readText,
+  procRoot,
+  parseKeyValue,
+  firstNumber,
+  errnoToUnavailable,
+  clockTicks,
+  IS_LINUX,
+  DEFAULT_SYSFS_ROOT,
+  DEFAULT_PROC_ROOT,
+  CLOCK_TICKS
 };

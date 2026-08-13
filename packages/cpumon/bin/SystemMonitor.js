@@ -1,3 +1,4 @@
+// src/SystemMonitor.ts
 import EventEmitter from "events";
 import { aggregateCpu, getCpuDiff, getCpuInfo } from "./CpuMonitor.js";
 import { getDiskUsage } from "./collectors/disk.js";
@@ -6,7 +7,7 @@ import { getMemoryInfo } from "./collectors/memory.js";
 import { diffNetwork, getNetworkCounters } from "./collectors/network.js";
 import { diffProcesses, getProcessCounters, selectProcesses } from "./collectors/process.js";
 import { diffContainerCpu, listContainers } from "./collectors/container.js";
-const DEFAULT_COLLECTORS = ["cpu", "memory", "load"];
+var DEFAULT_COLLECTORS = ["cpu", "memory", "load"];
 function readBaseline(collect, options) {
   return {
     cpu: collect.has("cpu") ? getCpuInfo() : [],
@@ -32,7 +33,7 @@ function withContainerCpu(before, after, elapsedMs) {
   const baseline = new Map(before.map((item) => [item.path, item]));
   return after.map((item) => {
     const previous = baseline.get(item.path);
-    if (previous === void 0) {
+    if (previous === undefined) {
       return item;
     }
     return { ...item, ...diffContainerCpu(previous.cpu, item.cpu, elapsedMs) };
@@ -52,9 +53,9 @@ function sampleSystem(options = {}) {
   }
   return snapshot;
 }
+
 class SystemMonitor extends EventEmitter {
   ms;
-  /** null while stopped */
   intervalId;
   collect;
   options;
@@ -71,12 +72,6 @@ class SystemMonitor extends EventEmitter {
     this.intervalId = null;
     this.start();
   }
-  /**
-   * Begin sampling. Safe to call on a running monitor, and safe after
-   * stopMonitor() - the baseline is re-read so the first sample after a
-   * restart measures the new window rather than the gap, exactly as
-   * CpuMonitor.start() does.
-   */
   start() {
     if (this.intervalId !== null) {
       return;
@@ -87,7 +82,6 @@ class SystemMonitor extends EventEmitter {
       this.intervalId.unref();
     }
   }
-  /** Stop sampling. Listeners the caller registered are left attached. */
   stopMonitor() {
     if (this.intervalId === null) {
       return;
@@ -95,7 +89,6 @@ class SystemMonitor extends EventEmitter {
     clearInterval(this.intervalId);
     this.intervalId = null;
   }
-  /** Alias for stopMonitor(), matching the usual Node resource vocabulary. */
   close() {
     this.stopMonitor();
   }
@@ -119,32 +112,20 @@ class SystemMonitor extends EventEmitter {
         snapshot.cpuOverall = aggregateCpu(snapshot.cpu);
       }
       if (this.collect.has("network")) {
-        snapshot.network = pairwise(
-          this.baseline.network,
-          next.network,
-          (before, after) => ({ available: true, ...diffNetwork(before, after, elapsedMs) })
-        );
+        snapshot.network = pairwise(this.baseline.network, next.network, (before, after) => ({ available: true, ...diffNetwork(before, after, elapsedMs) }));
       }
       if (this.collect.has("process")) {
-        snapshot.processes = pairwise(
-          this.baseline.processes,
-          next.processes,
-          (before, after) => ({
-            available: true,
-            processes: selectProcesses(diffProcesses(before, after), this.options)
-          })
-        );
+        snapshot.processes = pairwise(this.baseline.processes, next.processes, (before, after) => ({
+          available: true,
+          processes: selectProcesses(diffProcesses(before, after), this.options)
+        }));
       }
       if (this.collect.has("container")) {
-        snapshot.containers = pairwise(
-          this.baseline.containers,
-          next.containers,
-          (before, after) => ({
-            available: true,
-            scope: after.scope,
-            containers: withContainerCpu(before.containers, after.containers, elapsedMs)
-          })
-        );
+        snapshot.containers = pairwise(this.baseline.containers, next.containers, (before, after) => ({
+          available: true,
+          scope: after.scope,
+          containers: withContainerCpu(before.containers, after.containers, elapsedMs)
+        }));
       }
       this.baseline = next;
       this.emit("sample", snapshot);
@@ -154,6 +135,6 @@ class SystemMonitor extends EventEmitter {
   }
 }
 export {
-  SystemMonitor,
-  sampleSystem
+  sampleSystem,
+  SystemMonitor
 };

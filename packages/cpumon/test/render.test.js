@@ -13,7 +13,14 @@ import {
 } from '../bin/render.js';
 import { unavailable } from '../bin/index.js';
 
-// compare plain text, not escape sequences
+// compare plain text, not escape sequences.
+//
+// This mutates the shared chalk singleton for the whole process. Under
+// `node --test` every file is its own child process, so it stays here; under
+// `bun test` it does not, and running both packages' suites in one process
+// would strip the colour the dashboard's tests assert on. That is why the root
+// `test` script fans out with `bun run --filter` - one process per package -
+// rather than calling `bun test` at the root.
 chalk.level = 0;
 
 

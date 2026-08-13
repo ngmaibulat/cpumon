@@ -1,8 +1,10 @@
+// src/collectors/network.ts
 import { unavailable } from "../types.js";
 import { procRoot, readText } from "./proc.js";
 function parseNetDev(text) {
   const interfaces = [];
-  for (const line of text.split("\n")) {
+  for (const line of text.split(`
+`)) {
     const colon = line.indexOf(":");
     if (colon === -1) {
       continue;
@@ -39,11 +41,11 @@ function getNetworkCounters(options) {
 }
 function diffNetwork(prev, next, elapsedMs) {
   const baseline = new Map(prev.interfaces.map((item) => [item.name, item]));
-  const seconds = elapsedMs / 1e3;
+  const seconds = elapsedMs / 1000;
   const interfaces = [];
   for (const current of next.interfaces) {
     const before = baseline.get(current.name);
-    if (before === void 0) {
+    if (before === undefined) {
       continue;
     }
     const perSecond = (now, then) => {
@@ -59,7 +61,7 @@ function diffNetwork(prev, next, elapsedMs) {
   return { interfaces, elapsedMs };
 }
 export {
-  diffNetwork,
+  parseNetDev,
   getNetworkCounters,
-  parseNetDev
+  diffNetwork
 };

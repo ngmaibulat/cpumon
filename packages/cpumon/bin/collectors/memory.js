@@ -1,9 +1,10 @@
+// src/collectors/memory.ts
 import os from "os";
 import { unavailable } from "../types.js";
 import { firstNumber, parseKeyValue, procRoot, readText } from "./proc.js";
 import { readSelfLimits } from "./cgroup.js";
 function parseMeminfo(text) {
-  const fields = /* @__PURE__ */ new Map();
+  const fields = new Map;
   for (const [key, raw] of parseKeyValue(text)) {
     const value = firstNumber(raw);
     if (value === null) {
@@ -95,10 +96,10 @@ function getMemoryInfo(options) {
   return withCgroupLimit(memory, readSelfLimits(options));
 }
 export {
-  getMemoryInfo,
-  osMemoryInfo,
-  parseMeminfo,
-  readMeminfo,
+  withCgroupLimit,
   toMemoryInfo,
-  withCgroupLimit
+  readMeminfo,
+  parseMeminfo,
+  osMemoryInfo,
+  getMemoryInfo
 };

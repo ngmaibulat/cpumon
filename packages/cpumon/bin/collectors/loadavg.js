@@ -1,3 +1,4 @@
+// src/collectors/loadavg.ts
 import os from "os";
 import { unavailable } from "../types.js";
 function toLoadAverage(avg, cores) {
@@ -21,6 +22,6 @@ function getLoadAverage() {
   return { available: true, ...toLoadAverage([one, five, fifteen], os.cpus().length) };
 }
 export {
-  getLoadAverage,
-  toLoadAverage
+  toLoadAverage,
+  getLoadAverage
 };

@@ -1,3 +1,4 @@
+// src/collectors/process.ts
 import { readdirSync } from "node:fs";
 import { unavailable } from "../types.js";
 import { parseKeyValue, procRoot, readText } from "./proc.js";
@@ -34,20 +35,21 @@ function parsePidStatus(text) {
   const rss = Number(fields.get("VmRSS")?.split(/\s+/)[0]);
   return {
     name: fields.get("Name") ?? "",
-    // a kernel thread has no VmRSS at all
     rss: Number.isFinite(rss) ? rss * 1024 : 0
   };
 }
 function parseStatTotal(text) {
-  const line = text.split("\n").find((item) => item.startsWith("cpu "));
-  if (line === void 0) {
+  const line = text.split(`
+`).find((item) => item.startsWith("cpu "));
+  if (line === undefined) {
     return null;
   }
   const total = line.trim().split(/\s+/).slice(1).map(Number).reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
   return total > 0 ? total : null;
 }
 function countCores(text) {
-  return text.split("\n").filter((line) => /^cpu\d/.test(line)).length;
+  return text.split(`
+`).filter((line) => /^cpu\d/.test(line)).length;
 }
 function getProcessCounters(options) {
   const root = procRoot(options);
@@ -92,7 +94,7 @@ function diffProcesses(prev, next) {
   const loads = [];
   for (const current of next.processes) {
     const before = baseline.get(current.pid);
-    if (before === void 0) {
+    if (before === undefined) {
       continue;
     }
     const delta = Math.max(0, current.jiffies - before.jiffies);
@@ -144,14 +146,14 @@ function selectProcesses(loads, options = {}) {
   return attachRss(topProcesses(sortProcesses(loads, key, options.sortReverse), n), options);
 }
 export {
-  attachRss,
-  diffProcesses,
-  getProcessCounters,
-  parsePidStat,
-  parsePidStatus,
-  parseStatTotal,
-  selectProcesses,
-  sortNeedsRss,
+  topProcesses,
   sortProcesses,
-  topProcesses
+  sortNeedsRss,
+  selectProcesses,
+  parseStatTotal,
+  parsePidStatus,
+  parsePidStat,
+  getProcessCounters,
+  diffProcesses,
+  attachRss
 };

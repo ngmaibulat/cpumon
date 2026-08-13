@@ -23,11 +23,12 @@
         "node": ">=22"
     },
     "scripts": {
-        "build": "node scripts/build.mjs",
-        "build-watch": "node scripts/build.mjs --watch",
+        "build": "bun run scripts/build.ts",
+        "build-watch": "bun run scripts/build.ts --watch",
         "typecheck": "tsc --noEmit -p tsconfig.json",
-        "test": "npm run build && FORCE_COLOR=3 node --test \"test/**/*.test.js\"",
-        "prepack": "npm run build"
+        "test": "bun run build && FORCE_COLOR=3 bun test",
+        "test:node": "bun run build && FORCE_COLOR=3 node --test \"test/**/*.test.js\"",
+        "prepack": "bun run build"
     },
     "repository": {
         "type": "git",
@@ -59,7 +60,6 @@
     "devDependencies": {
         "@types/node": "^22.0.0",
         "@types/react": "^19.2.0",
-        "esbuild": "^0.28.2",
         "typescript": "^5.9.3"
     }
 }

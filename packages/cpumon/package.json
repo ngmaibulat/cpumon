@@ -31,12 +31,12 @@
         "node": ">=18"
     },
     "scripts": {
-        "esbuild-help": "esbuild -h",
-        "test": "npm run build && node --test \"test/**/*.test.js\"",
-        "build-watch": "node scripts/build.mjs --watch",
-        "build": "node scripts/build.mjs",
+        "test": "bun run build && bun test",
+        "test:node": "bun run build && node --test \"test/**/*.test.js\"",
+        "build-watch": "bun run scripts/build.ts --watch",
+        "build": "bun run scripts/build.ts",
         "build:types": "tsc -p tsc-types.json",
-        "prepack": "npm run build && npm run build:types"
+        "prepack": "bun run build && bun run build:types"
     },
     "bin": {
         "cpumon": "bin/cpumon.js"
@@ -65,7 +65,6 @@
     },
     "devDependencies": {
         "@types/node": "^18.19.130",
-        "esbuild": "^0.28.2",
         "typescript": "^5.9.3"
     }
 }

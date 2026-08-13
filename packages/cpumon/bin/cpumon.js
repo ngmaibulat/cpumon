@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+
+// src/cpumon.ts
 import chalk from "chalk";
 import { aggregateCpu } from "./CpuMonitor.js";
 import { SystemMonitor, sampleSystem } from "./SystemMonitor.js";
@@ -24,7 +26,7 @@ function fail(message, exitCode) {
   console.error("Try 'cpumon --help' for the list of options.");
   process.exit(exitCode);
 }
-let opts;
+var opts;
 try {
   opts = parseCliArgs(process.argv.slice(2));
 } catch (err) {
@@ -44,8 +46,8 @@ if (opts.version) {
 if (!opts.color) {
   chalk.level = 0;
 }
-const cpu = (snapshot) => snapshot.cpu ?? [];
-const TEXT = {
+var cpu = (snapshot) => snapshot.cpu ?? [];
+var TEXT = {
   bars: (snapshot) => renderBars(cpu(snapshot)),
   overall: (snapshot) => renderOverall(cpu(snapshot)),
   fetch: (snapshot) => renderFetch(cpu(snapshot), { mount: opts.mount }),
@@ -56,9 +58,7 @@ const TEXT = {
   proc: (snapshot) => renderProcesses(snapshot.processes ?? { available: false, reason: "not-applicable" }),
   containers: (snapshot) => renderContainers(snapshot.containers ?? { available: false, reason: "not-applicable" })
 };
-const SUBJECT = {
-  // unchanged from 0.3.0: the bare CpuInfo[] array, one line per sample, so
-  // the documented `cpumon --json | jq '[.[].loadPercentage]'` recipe holds
+var SUBJECT = {
   bars: (snapshot) => cpu(snapshot),
   overall: (snapshot) => aggregateCpu(cpu(snapshot)),
   fetch: (snapshot) => fetchSnapshot(cpu(snapshot), { mount: opts.mount }),
@@ -69,7 +69,7 @@ const SUBJECT = {
   proc: (snapshot) => snapshot.processes,
   containers: (snapshot) => snapshot.containers
 };
-const COLLECTORS_FOR = {
+var COLLECTORS_FOR = {
   bars: ["cpu"],
   overall: ["cpu"],
   fetch: ["cpu"],
@@ -80,12 +80,12 @@ const COLLECTORS_FOR = {
   proc: ["process"],
   containers: ["container"]
 };
-const render = opts.format === "json" ? (snapshot) => renderJson(SUBJECT[opts.mode](snapshot)) : TEXT[opts.mode];
+var render = opts.format === "json" ? (snapshot) => renderJson(SUBJECT[opts.mode](snapshot)) : TEXT[opts.mode];
 if (!MODE_TRAITS[opts.mode].needsWindow) {
   console.log(render(sampleSystem({ collect: COLLECTORS_FOR[opts.mode], mount: opts.mount })));
   process.exit(0);
 }
-const mon = new SystemMonitor({
+var mon = new SystemMonitor({
   intervalMs: opts.intervalMs,
   collect: COLLECTORS_FOR[opts.mode],
   mount: opts.mount,
@@ -94,7 +94,7 @@ const mon = new SystemMonitor({
 mon.on("error", (err) => {
   console.error(chalk.red(`cpumon: ${err.message}`));
 });
-let samples = 0;
+var samples = 0;
 mon.on("sample", (snapshot) => {
   if (MODE_TRAITS[opts.mode].clears && opts.format === "text" && process.stdout.isTTY) {
     console.clear();

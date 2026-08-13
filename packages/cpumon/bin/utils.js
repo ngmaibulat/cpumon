@@ -1,3 +1,4 @@
+// src/utils.ts
 import chalk from "chalk";
 function getProgressBar(progress, symbol) {
   if (!Number.isFinite(progress) || progress < 0 || progress > 100) {
