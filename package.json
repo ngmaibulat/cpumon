@@ -12,6 +12,8 @@
         "test": "bun run --filter './packages/*' --elide-lines=0 test",
         "test:node": "bun run --filter './packages/*' --elide-lines=0 test:node",
         "typecheck": "bun run --filter './packages/*' typecheck",
+        "release": "bun run scripts/release.ts",
+        "release:dry": "bun run scripts/release.ts --dry-run",
         "cpumon": "bun run --filter libsysmon build && node packages/libsysmon/bin/cpumon.js",
         "etop": "bun run --filter './packages/*' build && node packages/etop/dist/cli.js",
         "docs:build": "bun run --filter ./apps/* build",
