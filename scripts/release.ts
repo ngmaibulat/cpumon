@@ -82,6 +82,34 @@ async function publishedVersions(name: string): Promise<Set<string>>
 }
 
 
+// Bun 1.3 does not read `_authToken` out of ~/.npmrc the way npm does - it gives
+// up before it ever reaches the registry - but it does honour NPM_CONFIG_TOKEN.
+// So the credential gets resolved here and handed to the child explicitly.
+//
+// The default registry only, to match the lookup above: no `_auth`, no scoped
+// registry mapping. Widening this is reimplementing npm's config resolution.
+async function npmToken(): Promise<string | undefined>
+{
+    const fromEnv = process.env.NPM_CONFIG_TOKEN ?? process.env.NPM_TOKEN;
+    if (fromEnv) return fromEnv;
+
+    const npmrc = Bun.file(`${process.env.HOME}/.npmrc`);
+    if (!(await npmrc.exists())) return undefined;
+
+    for (const line of (await npmrc.text()).split('\n')) {
+        const [key, ...rest] = line.split('=');
+        if (key.trim() !== '//registry.npmjs.org/:_authToken') continue;
+
+        // npm allows ${VAR} in .npmrc, and quotes around the value
+        return rest.join('=').trim()
+            .replace(/^["']|["']$/g, '')
+            .replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? '');
+    }
+
+    return undefined;
+}
+
+
 const packages = (await readPackages()).filter((p) => !p.private);
 const order = publishOrder(packages);
 
@@ -137,7 +165,26 @@ for (const pkg of order) {
     }
 }
 
-// 4. everything the CI this repo does not have would otherwise catch
+// 4. the credential itself. bun publish only notices a missing token after it has
+//    packed the tarball, which on a multi-package release is late enough to stop
+//    halfway - the one state this script exists to avoid.
+const token = await npmToken();
+const willPublish = order.some((p) => !skip.has(p.name));
+
+if (willPublish && !token) {
+    problems.push('no npm credentials: run `bunx npm login`, or set NPM_CONFIG_TOKEN');
+}
+else if (willPublish) {
+    const who = Bun.spawnSync(['bun', 'pm', 'whoami'], {
+        cwd: ROOT,
+        env: { ...process.env, NPM_CONFIG_TOKEN: token! },
+    });
+
+    if (who.exitCode !== 0) problems.push(`npm rejected the token: ${who.stderr.toString().trim()}`);
+    else console.log(`authenticated as ${who.stdout.toString().trim()}`);
+}
+
+// 5. everything the CI this repo does not have would otherwise catch
 if (!dryRun) {
     console.log('\nverifying...');
     for (const script of ['typecheck', 'test']) {
@@ -152,23 +199,22 @@ if (problems.length) {
 }
 
 // Only now, with every package checked, does anything reach the registry.
+const publishEnv = token ? { ...process.env, NPM_CONFIG_TOKEN: token } : process.env;
+
 for (const pkg of order) {
     if (skip.has(pkg.name)) continue;
 
     console.log(`\npublishing ${pkg.name}@${pkg.version}`);
 
     const args = ['publish', '--cwd', pkg.dir, ...(dryRun ? ['--dry-run'] : [])];
-    const proc = Bun.spawnSync(['bun', ...args], { cwd: ROOT, stdout: 'inherit', stderr: 'inherit' });
+    const proc = Bun.spawnSync(['bun', ...args], {
+        cwd: ROOT,
+        env: publishEnv,
+        stdout: 'inherit',
+        stderr: 'inherit',
+    });
 
     if (proc.exitCode !== 0) {
-        // A dry run is the thing you reach for before you have credentials, and
-        // bun publish --dry-run still wants them. The preflight and the packed
-        // file list are what it was run for, and both already happened.
-        if (dryRun) {
-            console.warn(`  (${pkg.name}: dry-run publish exited ${proc.exitCode}, continuing)`);
-            continue;
-        }
-
         console.error(
             `\n${pkg.name} failed to publish. Anything before it in the order is already on the `
             + 'registry; fix the cause and re-run - published versions are skipped.',
