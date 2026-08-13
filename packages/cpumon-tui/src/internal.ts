@@ -100,3 +100,8 @@ export { DEFAULT_SIGNAL, SIGNALS, sendSignal } from './state/signals.js';
 export type { KillResult, Killer, SignalChoice, SignalName } from './state/signals.js';
 export type { KillTarget } from './state/types.js';
 export type { ProcessView } from './panels/ProcessPanel.js';
+
+export { ContainerPanel, pressure } from './panels/ContainerPanel.js';
+
+export { glyphsFor } from './hooks/useTheme.js';
+export type { Glyphs } from './hooks/useTheme.js';

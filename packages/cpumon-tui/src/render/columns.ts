@@ -107,19 +107,34 @@ export function fit(columns: Column[], available: number, rows: string[][] = [])
         return { columns: surviving, widths: [budget], dropped: columns.filter(c => !surviving.includes(c)) };
     }
 
-    // hand out what the minimums did not use, capped at what each column
-    // actually wants, leaving the flexible one to take the rest
+    /**
+     * Hand out what the minimums did not use, a cell at a time in rotation.
+     *
+     * Round-robin rather than filling each column to its natural width in turn.
+     * The greedy version starves whichever columns come last: with two cells
+     * spare, the first column took both and a memory figure four columns later
+     * stayed one short and rendered as "…9.6 MiB" - a truncated byte value,
+     * which does not read as an approximation but as a different number.
+     */
     let spare = budget - minimum;
 
-    for (let i = 0; i < keep.length && spare > 0; i++) {
-        if (surviving[i].flex === true) {
-            continue;
+    while (spare > 0) {
+        let given = 0;
+
+        for (let i = 0; i < keep.length && spare > 0; i++) {
+            if (surviving[i].flex === true || widths[i] >= natural[keep[i]]) {
+                continue;
+            }
+
+            widths[i]++;
+            spare--;
+            given++;
         }
 
-        const want = Math.min(natural[keep[i]] - widths[i], spare);
-
-        widths[i] += want;
-        spare -= want;
+        // every column has all it wanted; the rest belongs to the flexible one
+        if (given === 0) {
+            break;
+        }
     }
 
     const flexAt = surviving.findIndex(column => column.flex === true);
@@ -149,8 +164,14 @@ function required(columns: Column[], keep: number[]): number
 }
 
 
-/** pad a cell to its column width, truncating with an ellipsis if it overflows */
-export function cell(text: string, width: number, align: 'left' | 'right'): string
+/**
+ * Pad a cell to its column width, truncating with an ellipsis if it overflows.
+ *
+ * The ellipsis is a parameter because a terminal that cannot render U+2026
+ * shows a replacement box, and a replacement box in a table is a shifted
+ * column.
+ */
+export function cell(text: string, width: number, align: 'left' | 'right', ellipsis = '…'): string
 {
     if (width < 1) {
         return '';
@@ -160,10 +181,10 @@ export function cell(text: string, width: number, align: 'left' | 'right'): stri
         // truncate the end of a left-aligned cell (a command keeps its name)
         // and the start of a right-aligned one (a number keeps its magnitude)
         return width === 1
-            ? '…'
+            ? ellipsis.slice(0, 1)
             : align === 'left'
-                ? `${text.slice(0, width - 1)}…`
-                : `…${text.slice(text.length - width + 1)}`;
+                ? `${text.slice(0, width - ellipsis.length)}${ellipsis}`
+                : `${ellipsis}${text.slice(text.length - width + ellipsis.length)}`;
     }
 
     return align === 'left' ? text.padEnd(width) : text.padStart(width);
@@ -171,9 +192,9 @@ export function cell(text: string, width: number, align: 'left' | 'right'): stri
 
 
 /** join fitted cells into one row of exactly the width `fit` was given */
-export function row(cells: string[], fitted: Fitted): string
+export function row(cells: string[], fitted: Fitted, ellipsis = '…'): string
 {
     return fitted.columns
-        .map((column, i) => cell(cells[i] ?? '', fitted.widths[i], column.align))
+        .map((column, i) => cell(cells[i] ?? '', fitted.widths[i], column.align, ellipsis))
         .join(' '.repeat(GAP));
 }

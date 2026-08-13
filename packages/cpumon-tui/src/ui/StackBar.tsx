@@ -14,6 +14,8 @@
 import { Box, Text } from 'ink';
 import { memo } from 'react';
 
+import { useStyle } from '../hooks/useTheme.js';
+
 
 export type Segment = {
     label: string;
@@ -32,7 +34,14 @@ export type StackBarProps = {
 };
 
 
-const DEFAULT_GLYPHS = ['█', '▓', '▒', '░'];
+/**
+ * Shades rather than one solid fill, so the segments stay separable when there
+ * is no colour to separate them with.
+ */
+const SHADES = ['█', '▓', '▒', '░'];
+
+/** the same idea for a terminal that cannot render the block set at all */
+const ASCII_SHADES = ['#', '=', '-', '.'];
 
 
 /** how many cells each segment gets, summing to exactly `width` */
@@ -67,11 +76,18 @@ export function allocate(values: number[], width: number): number[]
 
 export const StackBar = memo(function StackBar({ segments, width, useGlyphs = false }: StackBarProps)
 {
+    const { unicode } = useStyle();
+
     if (width < 1) {
         return null;
     }
 
     const widths = allocate(segments.map(segment => segment.value), width);
+
+    const shades = unicode ? SHADES : ASCII_SHADES;
+    // a terminal with no block characters has nothing solid to fill with, so
+    // the shaded set is the only option there, colour or not
+    const distinct = useGlyphs || !unicode;
 
     return (
         <Box width={width} overflow="hidden">
@@ -81,7 +97,7 @@ export const StackBar = memo(function StackBar({ segments, width, useGlyphs = fa
                 }
 
                 const glyph = segment.glyph
-                    ?? (useGlyphs ? DEFAULT_GLYPHS[i % DEFAULT_GLYPHS.length] : '█');
+                    ?? (distinct ? shades[i % shades.length] : '█');
 
                 return (
                     <Text key={i} color={segment.color} wrap="truncate-end">

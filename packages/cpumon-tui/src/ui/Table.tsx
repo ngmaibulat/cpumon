@@ -17,7 +17,7 @@ import { Box, Text } from 'ink';
 import { memo } from 'react';
 
 import { fit, row as buildRow } from '../render/columns.js';
-import { useTheme } from '../hooks/useTheme.js';
+import { useStyle } from '../hooks/useTheme.js';
 import type { Column } from '../render/columns.js';
 
 
@@ -51,7 +51,7 @@ export const Table = memo(function Table({
     rowColor,
 }: TableProps)
 {
-    const theme = useTheme();
+    const { theme, glyphs } = useStyle();
 
     if (width < 1 || height < 1) {
         return null;
@@ -75,7 +75,7 @@ export const Table = memo(function Table({
 
         // the marker has to fit inside the column, so it replaces a character
         // rather than adding one
-        const marker = sortReverse ? '▲' : '▼';
+        const marker = sortReverse ? glyphs.sortAscending : glyphs.sortDescending;
 
         return `${column.header}${marker}`;
     });
@@ -83,7 +83,7 @@ export const Table = memo(function Table({
     return (
         <Box flexDirection="column" width={width} height={height} overflow="hidden">
             <Text color={theme.title} inverse wrap="truncate-end">
-                {buildRow(headers, fitted)}
+                {buildRow(headers, fitted, glyphs.ellipsis)}
             </Text>
             {visible.map((cells, i) => {
                 const index = offset + i;
@@ -99,7 +99,7 @@ export const Table = memo(function Table({
                         // which row is selected, so it inverts instead
                         inverse={isSelected && theme.selectionBackground === undefined}
                     >
-                        {buildRow(cells, fitted)}
+                        {buildRow(cells, fitted, glyphs.ellipsis)}
                     </Text>
                 );
             })}

@@ -20,14 +20,17 @@ export type FooterProps = {
 };
 
 
-const HINT = 'q quit · ? help · Tab panel · Space pause · / filter';
+const HINTS = ['q quit', '? help', 'Tab panel', 'Space pause', '/ filter'];
 
-const SHORT_HINT = 'q quit · ? help';
+const SHORT_HINTS = ['q quit', '? help'];
+
+
+const join = (parts: string[], separator: string) => parts.join(` ${separator} `);
 
 
 export const Footer = memo(function Footer({ width, message, note }: FooterProps)
 {
-    const { theme } = useStyle();
+    const { theme, glyphs } = useStyle();
 
     if (message !== null) {
         return (
@@ -48,7 +51,9 @@ export const Footer = memo(function Footer({ width, message, note }: FooterProps
     return (
         <Box width={width} overflow="hidden">
             <Text color={theme.muted} dimColor wrap="truncate-end">
-                {HINT.length <= width ? HINT : SHORT_HINT}
+                {join(HINTS, glyphs.separator).length <= width
+                    ? join(HINTS, glyphs.separator)
+                    : join(SHORT_HINTS, glyphs.separator)}
             </Text>
         </Box>
     );

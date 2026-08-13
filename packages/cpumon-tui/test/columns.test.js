@@ -119,6 +119,38 @@ test('columns grow to fit their content, up to what is available', () => {
 });
 
 
+test('spare width is shared out rather than taken by whichever column is first', () => {
+    // the greedy version starved later columns: with two cells spare the first
+    // column took both, and a memory figure four columns along stayed one short
+    // and rendered as "…9.6 MiB" - which does not read as an approximation, it
+    // reads as a different number
+    const columns = [
+        { key: 'a', header: 'A', align: 'left', min: 4, priority: 50 },
+        { key: 'b', header: 'B', align: 'right', min: 4, priority: 50 },
+        { key: 'c', header: 'C', align: 'left', min: 4, flex: true, priority: 50 },
+    ];
+
+    // every column wants two more than its minimum, and there are two to give
+    const rows = [['aaaaaa', 'bbbbbb', 'cccccc']];
+    const fitted = fit(columns, 4 + 4 + 4 + 2 + 2, rows);
+
+    assert.deepEqual(fitted.widths.slice(0, 2), [5, 5], 'the spare should be split');
+});
+
+
+test('a column never grows past what its content needs', () => {
+    const columns = [
+        { key: 'a', header: 'A', align: 'left', min: 2, priority: 50 },
+        { key: 'b', header: 'B', align: 'left', min: 2, flex: true, priority: 50 },
+    ];
+
+    const fitted = fit(columns, 40, [['ab', 'x']]);
+
+    assert.equal(fitted.widths[0], 2, 'the fixed column had all it wanted at 2');
+    assert.equal(fitted.widths[1], 37, 'the flexible column takes the rest');
+});
+
+
 test('a wide cell widens its own column rather than overflowing', () => {
     const columns = [
         { key: 'a', header: 'A', align: 'left', min: 2, priority: 10 },

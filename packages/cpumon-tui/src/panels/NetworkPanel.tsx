@@ -156,7 +156,7 @@ type BodyProps = {
 
 function Body({ rx, tx, current, scale, width, height, bits, tick }: BodyProps)
 {
-    const { theme } = useStyle();
+    const { theme, glyphs } = useStyle();
 
     // one ceiling for both halves: separate axes would make a 2 KiB/s upload
     // look the same size as a 200 MiB/s download
@@ -201,21 +201,21 @@ function Body({ rx, tx, current, scale, width, height, bits, tick }: BodyProps)
             {summaryRows === 1 ? (
                 // one row left: both directions on it, dropping the totals
                 <Text wrap="truncate-end">
-                    <Text color={theme.network[1]}>{'↓ '}</Text>
+                    <Text color={theme.network[1]}>{`${glyphs.down} `}</Text>
                     <Text color={theme.value}>{unit(current.rxBytesPerSec)}</Text>
-                    <Text color={theme.network[2]}>{'  ↑ '}</Text>
+                    <Text color={theme.network[2]}>{`  ${glyphs.up} `}</Text>
                     <Text color={theme.value}>{unit(current.txBytesPerSec)}</Text>
                 </Text>
             ) : null}
             {summaryRows >= 2 ? (
                 <>
                     <Text wrap="truncate-end">
-                        <Text color={theme.network[1]}>{'↓ '}</Text>
+                        <Text color={theme.network[1]}>{`${glyphs.down} `}</Text>
                         <Text color={theme.value}>{unit(current.rxBytesPerSec).padEnd(12)}</Text>
                         <Text color={theme.muted}>{`total ${bytes(current.rxBytes)}`}</Text>
                     </Text>
                     <Text wrap="truncate-end">
-                        <Text color={theme.network[2]}>{'↑ '}</Text>
+                        <Text color={theme.network[2]}>{`${glyphs.up} `}</Text>
                         <Text color={theme.value}>{unit(current.txBytesPerSec).padEnd(12)}</Text>
                         <Text color={theme.muted}>{`total ${bytes(current.txBytes)}`}</Text>
                     </Text>

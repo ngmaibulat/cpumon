@@ -242,7 +242,7 @@ function toRow(process: ProcessLoad): string[]
 
 function Detail({ process, width }: { process: ProcessLoad; width: number })
 {
-    const { theme } = useStyle();
+    const { theme, glyphs } = useStyle();
 
     // comm is truncated to fifteen bytes by the kernel, so this is as much of
     // the identity as cpumon can currently supply; a cmdline collector would
@@ -257,7 +257,7 @@ function Detail({ process, width }: { process: ProcessLoad; width: number })
     return (
         <Box width={width} overflow="hidden">
             <Text color={theme.muted} wrap="truncate-end">
-                {`  ${parts.join('  ·  ')}`}
+                {`  ${parts.join(`  ${glyphs.separator}  `)}`}
             </Text>
         </Box>
     );

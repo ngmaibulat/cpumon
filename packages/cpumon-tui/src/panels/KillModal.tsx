@@ -82,7 +82,7 @@ function Disabled({ width }: { width: number })
 
 function Confirm({ width, target, signal }: { width: number; target: KillTarget; signal: SignalName })
 {
-    const { theme } = useStyle();
+    const { theme, glyphs } = useStyle();
 
     const chosen = SIGNALS.find(item => item.name === signal) ?? SIGNALS[0];
 
@@ -92,7 +92,7 @@ function Confirm({ width, target, signal }: { width: number; target: KillTarget;
                 {`Signal ${target.comm}?`}
             </Text>
             <Text color={theme.label} wrap="truncate-end">
-                {`pid ${target.pid} · ${target.threads} thread${target.threads === 1 ? '' : 's'}`}
+                {`pid ${target.pid} ${glyphs.separator} ${target.threads} thread${target.threads === 1 ? '' : 's'}`}
             </Text>
             <Text> </Text>
             {SIGNALS.map(item => {
@@ -105,16 +105,16 @@ function Confirm({ width, target, signal }: { width: number; target: KillTarget;
                         color={selected ? theme.value : theme.muted}
                         bold={selected}
                     >
-                        {`${selected ? '▸ ' : '  '}${item.name.padEnd(8)} ${item.description}`}
+                        {`${selected ? `${glyphs.pointer} ` : '  '}${item.name.padEnd(8)} ${item.description}`}
                     </Text>
                 );
             })}
             <Text> </Text>
             <Text wrap="truncate-end">
-                <Text color={theme.label}>{'↑ ↓ choose · '}</Text>
+                <Text color={theme.label}>{`${glyphs.up} ${glyphs.down} choose ${glyphs.separator} `}</Text>
                 <Text color={theme.danger} bold>{'y'}</Text>
                 <Text color={theme.label}>{` send ${chosen.name}`}</Text>
-                <Text color={theme.label}>{' · Esc cancel'}</Text>
+                <Text color={theme.label}>{` ${glyphs.separator} Esc cancel`}</Text>
             </Text>
             {chosen.forceful ? (
                 <Text color={theme.warn} wrap="truncate-end">

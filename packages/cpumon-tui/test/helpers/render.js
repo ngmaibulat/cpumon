@@ -12,7 +12,7 @@
 import React from 'react';
 import { renderToString } from 'ink';
 
-import { DEFAULT_THEME, MONO_THEME, StoreProvider, StyleProvider } from '../../dist/internal.js';
+import { DEFAULT_THEME, MONO_THEME, StoreProvider, StyleProvider, glyphsFor } from '../../dist/internal.js';
 
 
 export const h = React.createElement;
@@ -51,7 +51,7 @@ export function draw(node, options = {})
         continuousColor = theme === DEFAULT_THEME,
     } = options;
 
-    const style = { theme, graph, unicode, continuousColor };
+    const style = { theme, graph, unicode, continuousColor, glyphs: glyphsFor(unicode) };
 
     const tree = options.store === undefined
         ? node

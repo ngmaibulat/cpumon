@@ -25,12 +25,12 @@ export type FilterInputProps = {
 
 export function FilterInput({ value, width, matches }: FilterInputProps)
 {
-    const { theme } = useStyle();
+    const { theme, unicode } = useStyle();
 
     // half a second on, half a second off - the rate a terminal cursor blinks,
     // so it reads as a cursor rather than as something flashing for attention
     const { frame } = useAnimation({ interval: 500 });
-    const cursor = frame % 2 === 0 ? '▏' : ' ';
+    const cursor = frame % 2 === 0 ? (unicode ? '▏' : '_') : ' ';
 
     const count = `${matches} match${matches === 1 ? '' : 'es'}`;
 
@@ -40,7 +40,7 @@ export function FilterInput({ value, width, matches }: FilterInputProps)
             <Text color={theme.value} wrap="truncate-start">{value}</Text>
             <Text color={theme.titleFocus}>{cursor}</Text>
             <Box flexGrow={1} />
-            <Text color={theme.muted}>{`${count}  Enter keep · Esc cancel`}</Text>
+            <Text color={theme.muted}>{`${count}  Enter keep, Esc cancel`}</Text>
         </Box>
     );
 }

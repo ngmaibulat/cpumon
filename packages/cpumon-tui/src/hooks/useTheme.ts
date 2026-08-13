@@ -17,6 +17,57 @@ import type { Theme } from '../theme/index.js';
 import type { GraphStyle } from '../../types/index.js';
 
 
+/**
+ * The decorative characters, chosen once by whether the terminal can show them.
+ *
+ * Small, but the alternative is every component reaching for a literal and one
+ * of them being missed - and a single character the terminal renders as a
+ * replacement box is enough to shift a column and tear the frame.
+ */
+export type Glyphs = {
+    ellipsis: string;
+    separator: string;
+    up: string;
+    down: string;
+    unlimited: string;
+    sortDescending: string;
+    sortAscending: string;
+    pointer: string;
+};
+
+
+const UNICODE_GLYPHS: Glyphs = {
+    ellipsis: '…',
+    separator: '·',
+    up: '↑',
+    down: '↓',
+    unlimited: '∞',
+    sortDescending: '▼',
+    sortAscending: '▲',
+    pointer: '▸',
+};
+
+
+const ASCII_GLYPHS: Glyphs = {
+    ellipsis: '~',
+    separator: '|',
+    up: '^',
+    down: 'v',
+    // "unlimited" spelled out: there is no ascii character that means infinity,
+    // and a bare '-' in a limit column reads as "unknown"
+    unlimited: 'none',
+    sortDescending: 'v',
+    sortAscending: '^',
+    pointer: '>',
+};
+
+
+export function glyphsFor(unicode: boolean): Glyphs
+{
+    return unicode ? UNICODE_GLYPHS : ASCII_GLYPHS;
+}
+
+
 export type DrawStyle = {
     theme: Theme;
     graph: Exclude<GraphStyle, 'auto'>;
@@ -24,6 +75,7 @@ export type DrawStyle = {
     continuousColor: boolean;
     /** the terminal can render box-drawing and block characters */
     unicode: boolean;
+    glyphs: Glyphs;
 };
 
 
@@ -32,6 +84,7 @@ const DEFAULT_STYLE: DrawStyle = {
     graph: 'block',
     continuousColor: true,
     unicode: true,
+    glyphs: UNICODE_GLYPHS,
 };
 
 

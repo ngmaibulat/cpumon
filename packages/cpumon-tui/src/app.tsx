@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 
 import { computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
 import { useStore, useStoreState } from './hooks/useStore.js';
-import { StyleProvider } from './hooks/useTheme.js';
+import { StyleProvider, glyphsFor } from './hooks/useTheme.js';
 import { resolve } from './state/keymap.js';
 import { reduce } from './state/reducer.js';
 import { initialUi } from './state/types.js';
@@ -26,12 +26,12 @@ import { DiskPanel } from './panels/DiskPanel.js';
 import { Footer } from './panels/Footer.js';
 import { Header } from './panels/Header.js';
 import { HelpOverlay } from './panels/HelpOverlay.js';
+import { ContainerPanel } from './panels/ContainerPanel.js';
 import { KillModal } from './panels/KillModal.js';
 import { MemoryPanel } from './panels/MemoryPanel.js';
 import { NetworkPanel } from './panels/NetworkPanel.js';
 import { ProcessPanel } from './panels/ProcessPanel.js';
 import { FilterInput } from './ui/FilterInput.js';
-import { Panel } from './ui/Panel.js';
 import { sendSignal } from './state/signals.js';
 import { resolveGraphStyle } from './term/capabilities.js';
 import type { Capabilities } from './term/capabilities.js';
@@ -202,6 +202,7 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
             graph: resolveGraphStyle(ui.graph, capabilities.unicode),
             continuousColor: capabilities.colorLevel >= 3,
             unicode: capabilities.unicode,
+            glyphs: glyphsFor(capabilities.unicode),
         };
     }, [ui.theme, ui.graph, capabilities]);
 
@@ -315,27 +316,9 @@ function PanelFor({ panel, width, height, focused, ui, onView }: PanelForProps)
                 />
             );
 
-        // containers arrive with their milestone; until then the slot shows a
-        // frame in the right place rather than nothing
         case 'container':
-            return <Placeholder panel={panel} width={width} height={height} focused={focused} />;
+            return <ContainerPanel width={width} height={height} focused={focused} />;
     }
-}
-
-
-/** a real frame in the right place, so the layout can be judged before the
- *  panel that fills it exists */
-function Placeholder({ panel, width, height, focused }: Omit<PanelForProps, 'ui' | 'onView'>)
-{
-    return (
-        <Panel title={panel.toUpperCase()} width={width} height={height} focused={focused}>
-            {({ width: inner, height: innerHeight }) => (
-                <Box width={inner} height={innerHeight} overflow="hidden">
-                    <Text dimColor wrap="truncate-end">not built yet</Text>
-                </Box>
-            )}
-        </Panel>
-    );
 }
 
 

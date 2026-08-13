@@ -24,7 +24,7 @@ export type HeaderProps = {
 
 export const Header = memo(function Header({ width, version, intervalMs, paused }: HeaderProps)
 {
-    const { theme } = useStyle();
+    const { theme, glyphs } = useStyle();
 
     // os.uptime() is a syscall, but this renders once a tick at most and the
     // alternative is threading a static fact through the store for no reason
@@ -43,7 +43,7 @@ export const Header = memo(function Header({ width, version, intervalMs, paused 
     let used = 0;
 
     for (const fact of facts) {
-        const cost = fact.length + (shown.length === 0 ? 0 : 3);
+        const cost = fact.length + (shown.length === 0 ? 0 : glyphs.separator.length + 2);
 
         if (used + cost > budget) {
             break;
@@ -57,7 +57,9 @@ export const Header = memo(function Header({ width, version, intervalMs, paused 
         <Box width={width} overflow="hidden">
             <Text color={theme.title} bold wrap="truncate-end">{shown[0] ?? ''}</Text>
             {shown.length > 1 ? (
-                <Text color={theme.muted} wrap="truncate-end">{` · ${shown.slice(1).join(' · ')}`}</Text>
+                <Text color={theme.muted} wrap="truncate-end">
+                    {` ${glyphs.separator} ${shown.slice(1).join(` ${glyphs.separator} `)}`}
+                </Text>
             ) : null}
             <Box flexGrow={1} />
             {right === '' ? null : <Text color={theme.warn} bold>{right}</Text>}
