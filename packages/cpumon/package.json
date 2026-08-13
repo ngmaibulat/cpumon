@@ -32,6 +32,7 @@
     },
     "scripts": {
         "test": "bun run build && bun test",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
         "test:node": "bun run build && node --test \"test/**/*.test.js\"",
         "build-watch": "bun run scripts/build.ts --watch",
         "build": "bun run scripts/build.ts",
@@ -65,6 +66,6 @@
     },
     "devDependencies": {
         "@types/node": "^18.19.130",
-        "typescript": "^5.9.3"
+        "typescript": "^7.0.2"
     }
 }

@@ -4,7 +4,10 @@
        alongside their sources. */
     "exclude": [
         "node_modules",
-        "bin"
+        "bin",
+        /* build tooling, not shipped code, and it reaches for Bun globals that
+           "types": ["node"] deliberately does not describe */
+        "scripts"
     ],
     "compilerOptions": {
         /* Visit https://aka.ms/tsconfig to read more about this file */
@@ -42,7 +45,14 @@
         // "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
         // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
         // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
-        // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
+        /* Must be explicit. TypeScript 5 pulled every @types package in
+           node_modules in automatically; 7 does not, and without this the whole
+           of `process`, `console` and `os` goes missing from a build that had
+           been fine for years. cpumon-tui already spelled it out, which is why
+           it was the only one of the two that still compiled after the bump. */
+        "types": [
+            "node"
+        ] /* Specify type package names to be included without being referenced in a source file. */,
         // "allowUmdGlobalAccess": true,                     /* Allow accessing UMD globals from modules. */
         // "moduleSuffixes": [],                             /* List of file name suffixes to search when resolving a module. */
         // "resolveJsonModule": true,                        /* Enable importing .json files. */
