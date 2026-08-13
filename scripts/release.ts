@@ -161,6 +161,14 @@ for (const pkg of order) {
     const proc = Bun.spawnSync(['bun', ...args], { cwd: ROOT, stdout: 'inherit', stderr: 'inherit' });
 
     if (proc.exitCode !== 0) {
+        // A dry run is the thing you reach for before you have credentials, and
+        // bun publish --dry-run still wants them. The preflight and the packed
+        // file list are what it was run for, and both already happened.
+        if (dryRun) {
+            console.warn(`  (${pkg.name}: dry-run publish exited ${proc.exitCode}, continuing)`);
+            continue;
+        }
+
         console.error(
             `\n${pkg.name} failed to publish. Anything before it in the order is already on the `
             + 'registry; fix the cause and re-run - published versions are skipped.',
