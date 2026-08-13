@@ -9,16 +9,16 @@ cgroups.
 npx etop
 ```
 
-It is a **separate package**. `cpumon` stays a small library with one runtime
+It is a **separate package**. `libsysmon` stays a small library with one runtime
 dependency; the dashboard is an application that brings React and a terminal
 renderer with it, and nobody importing `SystemMonitor` should have to carry
-that. `etop` depends on `cpumon`; nothing depends on the dashboard.
+that. `etop` depends on `libsysmon`; nothing depends on the dashboard.
 
 ```sh
 npm install -g etop     # then just: etop
 ```
 
-Node 22 or newer. `cpumon` itself still supports Node 18.
+Node 22 or newer. `libsysmon` itself still supports Node 18.
 
 ## Options
 

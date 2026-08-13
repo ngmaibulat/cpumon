@@ -14,9 +14,9 @@
 
 import { Box, Text } from 'ink';
 import { memo } from 'react';
-import { bytes, shortId } from 'cpumon/format';
-import { isAvailable } from 'cpumon';
-import type { ContainerInfo } from 'cpumon';
+import { bytes, shortId } from 'libsysmon/format';
+import { isAvailable } from 'libsysmon';
+import type { ContainerInfo } from 'libsysmon';
 
 import { Loading } from '../ui/Loading.js';
 import { Panel } from '../ui/Panel.js';

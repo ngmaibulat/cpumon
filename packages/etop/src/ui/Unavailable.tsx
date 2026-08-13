@@ -17,7 +17,7 @@
 import { Box, Text } from 'ink';
 
 import { useTheme } from '../hooks/useTheme.js';
-import type { UnavailableReason } from 'cpumon';
+import type { UnavailableReason } from 'libsysmon';
 
 
 export type UnavailableProps = {

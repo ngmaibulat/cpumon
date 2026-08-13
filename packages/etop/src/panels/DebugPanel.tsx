@@ -7,9 +7,9 @@
  */
 
 import { Box, Text } from 'ink';
-import { bytes, rate } from 'cpumon/format';
-import { isAvailable } from 'cpumon';
-import type { Probe } from 'cpumon';
+import { bytes, rate } from 'libsysmon/format';
+import { isAvailable } from 'libsysmon';
+import type { Probe } from 'libsysmon';
 
 import { useStore, useStoreState } from '../hooks/useStore.js';
 

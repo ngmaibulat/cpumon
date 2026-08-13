@@ -1,7 +1,7 @@
 /**
  * Filesystem usage.
  *
- * One mount, because that is what cpumon's collector reads. btop lists every
+ * One mount, because that is what libsysmon's collector reads. btop lists every
  * mounted filesystem, and this panel will too once there is a getMounts() to
  * ask - but the honest version of "we only know about one" is to say so in the
  * panel, not to leave the space looking like it failed to fill.
@@ -13,8 +13,8 @@
 
 import { Box, Text } from 'ink';
 import { memo } from 'react';
-import { bytes } from 'cpumon/format';
-import { isAvailable } from 'cpumon';
+import { bytes } from 'libsysmon/format';
+import { isAvailable } from 'libsysmon';
 
 import { Gauge } from '../ui/Gauge.js';
 import { Loading } from '../ui/Loading.js';

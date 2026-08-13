@@ -1,7 +1,7 @@
 # etop
 
 A full-screen terminal dashboard for CPU, memory, disk, network, processes and
-containers — built on [`cpumon`](https://www.npmjs.com/package/cpumon)'s
+containers — built on [`libsysmon`](https://www.npmjs.com/package/libsysmon)'s
 collectors, drawn with [Ink](https://github.com/vadimdemedes/ink).
 
 ```sh
@@ -36,7 +36,7 @@ etop
 ```
 
 Node 22 or newer. If you only want numbers to script against, install
-[`cpumon`](https://www.npmjs.com/package/cpumon) instead — it runs on Node 18,
+[`libsysmon`](https://www.npmjs.com/package/libsysmon) instead — it runs on Node 18,
 has one runtime dependency, and `cpumon --json` pipes into `jq`.
 
 ## Keys

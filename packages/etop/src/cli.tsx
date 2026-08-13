@@ -3,7 +3,7 @@
 /**
  * The `etop` binary.
  *
- * Thin by design, like cpumon's own: parsing lives in cli-args.ts, everything
+ * Thin by design, like libsysmon's own: parsing lives in cli-args.ts, everything
  * else behind runTui(). This is the only file in the package with a top-level
  * side effect, which is what lets a test import any other module freely.
  *

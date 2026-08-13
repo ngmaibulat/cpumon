@@ -1,7 +1,12 @@
 # Getting started
 
-`cpumon` is two things in one package: a command line tool that shows CPU load
-per core, and a small library that reports the same numbers to your own code.
+`libsysmon` is two things in one package: a command line tool that shows CPU
+load per core, and a small library that reports the same numbers to your own
+code.
+
+The package is `libsysmon`; the command it installs is `cpumon`. So
+`npm i -g libsysmon` gives you `cpumon` on your path, and a one-off run needs
+`npx -p libsysmon cpumon` rather than `npx cpumon`.
 
 ## Requirements
 
@@ -15,14 +20,14 @@ per core, and a small library that reports the same numbers to your own code.
 No install required:
 
 ```sh
-npx cpumon@latest
+npx -p libsysmon cpumon
 ```
 
 That draws one bar per core and refreshes every second until you press Ctrl-C.
 Every option is listed by:
 
 ```sh
-npx cpumon@latest --help
+npx -p libsysmon cpumon --help
 ```
 
 See the [CLI reference](./cli) for what each flag does.
@@ -30,20 +35,20 @@ See the [CLI reference](./cli) for what each flag does.
 To install it permanently:
 
 ```sh
-npm install -g cpumon
+npm install -g libsysmon
 cpumon --fetch
 ```
 
 ## Install as a dependency
 
 ```sh
-npm install cpumon
+npm install libsysmon
 ```
 
 ## First sample
 
 ```javascript
-import { CpuMonitor } from 'cpumon';
+import { CpuMonitor } from 'libsysmon';
 
 const monitor = new CpuMonitor(1000);
 
@@ -59,8 +64,8 @@ immediately — there is no separate `start()` call to make.
 In TypeScript, the payload is typed:
 
 ```typescript
-import { CpuMonitor } from 'cpumon';
-import type { CpuInfo } from 'cpumon';
+import { CpuMonitor } from 'libsysmon';
+import type { CpuInfo } from 'libsysmon';
 
 const monitor = new CpuMonitor(1000);
 

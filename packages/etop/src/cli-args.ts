@@ -1,7 +1,7 @@
 /**
  * Argument parsing and help text for the `etop` binary.
  *
- * Split from cli.tsx for the same reason cpumon splits cli.ts from cpumon.ts:
+ * Split from cli.tsx for the same reason libsysmon splits cli.ts from cpumon.ts:
  * nothing here writes to a stream or exits, so a test can call it directly
  * instead of spawning a process. cli.tsx owns all the I/O and is the only file
  * with a top-level side effect.

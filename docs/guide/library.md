@@ -11,7 +11,7 @@ Fires once per interval with a `CpuInfo[]` — one entry per logical core, in th
 order the operating system reports them.
 
 ```javascript
-import { CpuMonitor } from 'cpumon';
+import { CpuMonitor } from 'libsysmon';
 
 const monitor = new CpuMonitor(1000);
 
@@ -99,7 +99,7 @@ the per-core percentages, so a core that was busy for a short window does not
 count the same as one busy for a long one:
 
 ```javascript
-import { CpuMonitor, aggregateCpu } from 'cpumon';
+import { CpuMonitor, aggregateCpu } from 'libsysmon';
 
 const monitor = new CpuMonitor(1000);
 
@@ -113,7 +113,7 @@ monitor.on('cpudata', (load) => {
 If you do not want an interval at all, sample twice yourself:
 
 ```javascript
-import { getCpuInfo, getCpuDiff, aggregateCpu } from 'cpumon';
+import { getCpuInfo, getCpuDiff, aggregateCpu } from 'libsysmon';
 
 const before = getCpuInfo();
 
@@ -132,7 +132,7 @@ a difference between two readings.
 Point-in-time metrics need no sampling window and no monitor at all:
 
 ```javascript
-import { getMemoryInfo, getLoadAverage, getDiskUsage, isAvailable } from 'cpumon';
+import { getMemoryInfo, getLoadAverage, getDiskUsage, isAvailable } from 'libsysmon';
 
 console.log(getMemoryInfo().usedPercentage);   // always answers
 
@@ -147,7 +147,7 @@ Counters — network bytes, per-process jiffies, cgroup CPU time — need two
 readings and the time between them. `SystemMonitor` owns that bookkeeping:
 
 ```javascript
-import { SystemMonitor, isAvailable } from 'cpumon';
+import { SystemMonitor, isAvailable } from 'libsysmon';
 
 const monitor = new SystemMonitor({
     intervalMs: 1000,
@@ -182,7 +182,7 @@ read that works on the host. Rather than throw — which would make one missing
 file fatal to an entire snapshot — those collectors return a `Probe`:
 
 ```javascript
-import { getNetworkCounters, isAvailable } from 'cpumon';
+import { getNetworkCounters, isAvailable } from 'libsysmon';
 
 const net = getNetworkCounters();
 
@@ -209,7 +209,7 @@ The parsers take text, so they work on data from anywhere — a remote agent, a
 log, a fixture:
 
 ```javascript
-import { parseMeminfo, toMemoryInfo, parsePidStat } from 'cpumon';
+import { parseMeminfo, toMemoryInfo, parsePidStat } from 'libsysmon';
 
 const memory = toMemoryInfo(parseMeminfo(capturedMeminfoText), 'meminfo');
 const counters = parsePidStat(capturedStatLine);
@@ -226,9 +226,9 @@ getMemoryInfo({ procRoot: './fixtures/proc' });
 
 | Import | Contents |
 | --- | --- |
-| `cpumon` | The public API: both monitors, every collector, and the shared types |
-| `cpumon/cpu` | The `CpuMonitor` module directly |
-| `cpumon/system` | The `SystemMonitor` module directly |
+| `libsysmon` | The public API: both monitors, every collector, and the shared types |
+| `libsysmon/cpu` | The `CpuMonitor` module directly |
+| `libsysmon/system` | The `SystemMonitor` module directly |
 
 The renderers are deliberately **not** part of the public API: they import
 `chalk`, and keeping them out of the barrel means a consumer who only wants the

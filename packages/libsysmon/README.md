@@ -1,4 +1,4 @@
-# cpumon
+# libsysmon
 
 System monitor library and CLI tool for Node.js. CPU, memory, disk, network,
 processes and containers — from the terminal, as JSON, or from your own code.
@@ -18,13 +18,13 @@ Requires Node 18 or newer. ESM only — use `import`, not `require`.
 ## CLI
 
 ```sh
-npx cpumon@latest
+npx -p libsysmon cpumon
 ```
 
 One bar per core, refreshed every second, until Ctrl-C.
 
 ```sh
-npx cpumon@latest --help
+npx -p libsysmon cpumon --help
 ```
 
 ```
@@ -86,11 +86,11 @@ $ cpumon --net --json          # on macOS
 ## Library
 
 ```sh
-npm i cpumon
+npm i libsysmon
 ```
 
 ```javascript
-import { CpuMonitor, aggregateCpu } from 'cpumon';
+import { CpuMonitor, aggregateCpu } from 'libsysmon';
 
 const monitor = new CpuMonitor(1000);
 
@@ -110,7 +110,7 @@ For anything beyond CPU, `SystemMonitor` samples several collectors at once and
 owns the baseline bookkeeping that counters like network bytes require:
 
 ```javascript
-import { SystemMonitor, getMemoryInfo, isAvailable } from 'cpumon';
+import { SystemMonitor, getMemoryInfo, isAvailable } from 'libsysmon';
 
 // point-in-time metrics need no sampling window
 console.log(getMemoryInfo().usedPercentage);

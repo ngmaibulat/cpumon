@@ -1,7 +1,7 @@
 {
     "name": "cpumon-monorepo",
     "private": true,
-    "description": "Workspace root for cpumon and etop. Not published; see packages/",
+    "description": "Workspace root for libsysmon and etop. Not published; see packages/",
     "type": "module",
     "workspaces": [
         "packages/*"
@@ -11,8 +11,8 @@
         "test": "bun run --filter './packages/*' --elide-lines=0 test",
         "test:node": "bun run --filter './packages/*' --elide-lines=0 test:node",
         "typecheck": "bun run --filter './packages/*' typecheck",
-        "cpumon": "bun run --filter cpumon build && node packages/cpumon/bin/cpumon.js",
-        "tui": "bun run --filter './packages/*' build && node packages/etop/dist/cli.js",
+        "cpumon": "bun run --filter libsysmon build && node packages/libsysmon/bin/cpumon.js",
+        "etop": "bun run --filter './packages/*' build && node packages/etop/dist/cli.js",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs"

@@ -21,9 +21,9 @@
 
 import { Box, Text } from 'ink';
 import { memo, useEffect, useMemo } from 'react';
-import { bytes } from 'cpumon/format';
-import { isAvailable } from 'cpumon';
-import type { ProcessLoad, ProcessSortKey } from 'cpumon';
+import { bytes } from 'libsysmon/format';
+import { isAvailable } from 'libsysmon';
+import type { ProcessLoad, ProcessSortKey } from 'libsysmon';
 
 import { Loading } from '../ui/Loading.js';
 import { Panel } from '../ui/Panel.js';
@@ -245,7 +245,7 @@ function Detail({ process, width }: { process: ProcessLoad; width: number })
     const { theme, glyphs } = useStyle();
 
     // comm is truncated to fifteen bytes by the kernel, so this is as much of
-    // the identity as cpumon can currently supply; a cmdline collector would
+    // the identity as libsysmon can currently supply; a cmdline collector would
     // make this line worth much more
     const parts = [
         `ppid ${process.ppid}`,

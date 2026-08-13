@@ -16,9 +16,9 @@
 
 import { Box, Text } from 'ink';
 import { memo, useMemo, useRef } from 'react';
-import { bytes, rate } from 'cpumon/format';
-import { isAvailable } from 'cpumon';
-import type { InterfaceRate } from 'cpumon';
+import { bytes, rate } from 'libsysmon/format';
+import { isAvailable } from 'libsysmon';
+import type { InterfaceRate } from 'libsysmon';
 
 import { Graph } from '../ui/Graph.js';
 import { Loading } from '../ui/Loading.js';
@@ -44,7 +44,7 @@ export type NetworkPanelProps = {
 /**
  * Interfaces, busiest first, but loopback last regardless.
  *
- * Ported from cpumon's own renderNetwork: lo is almost always the loudest
+ * Ported from libsysmon's own renderNetwork: lo is almost always the loudest
  * interface on a machine and almost never the interesting one, so sorting it
  * to the top would mean the default selection is nearly always wrong.
  */

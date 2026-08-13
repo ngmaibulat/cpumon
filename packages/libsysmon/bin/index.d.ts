@@ -10,7 +10,7 @@
  *
  * Renderers are deliberately NOT re-exported here: they pull in chalk, and
  * keeping them out means a consumer who only wants the numbers does not pay for
- * a terminal-colour library. Import 'cpumon/cpu' or the CLI for those.
+ * a terminal-colour library. Import 'libsysmon/cpu' or the CLI for those.
  *
  * Every collector's pure parseX() is exported alongside its reader. They are
  * the part worth reusing when the data comes from somewhere other than this

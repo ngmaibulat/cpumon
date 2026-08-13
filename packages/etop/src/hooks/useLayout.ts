@@ -8,14 +8,14 @@
  * 'not-applicable' or 'unsupported-platform' is not a panel with nothing in it,
  * it is a panel that should not exist here - so it is removed from the layout
  * entirely and the rest reflow into its space. This mirrors the rule
- * probeRow() already follows in cpumon's own renderer. The actionable
+ * probeRow() already follows in libsysmon's own renderer. The actionable
  * failures - permission denied, missing file, parse error - keep their panel,
  * because a diagnostic tool that hides diagnostics is worse than useless.
  *
  * Second: how the surviving panels are arranged, which is purely about size.
  */
 
-import type { SystemSnapshot } from 'cpumon/system';
+import type { SystemSnapshot } from 'libsysmon/system';
 
 import { PANEL_ORDER } from '../state/types.js';
 import type { PanelId } from '../state/types.js';

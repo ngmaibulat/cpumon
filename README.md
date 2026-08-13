@@ -7,14 +7,19 @@ This repository is a Bun workspace holding two published packages.
 
 | package | what it is | install |
 | --- | --- | --- |
-| [`cpumon`](packages/cpumon) | the library and the `cpumon` CLI. One runtime dependency (chalk), Node >= 18. | `bun add cpumon` |
+| [`libsysmon`](packages/libsysmon) | the library, and the `cpumon` CLI it ships. One runtime dependency (chalk), Node >= 18. | `bun add libsysmon` |
 | [`etop`](packages/etop) | the `etop` dashboard, built with Ink. Node >= 22. | `bun add -g etop` |
 
-They are separate packages on purpose. `cpumon` is something you depend on from
+The package is `libsysmon`; the command it installs is still `cpumon`. That is
+deliberate — the library and the terminal command are named for what each of
+them is — but it does mean `npx cpumon` no longer reaches this project. Use
+`npx -p libsysmon cpumon`, or install it and just run `cpumon`.
+
+They are separate packages on purpose. `libsysmon` is something you depend on from
 code, so it stays small and its install cost stays boring. The dashboard is an
 application that happens to be distributed over npm, and it brings React and a
 terminal renderer with it — a weight nobody importing `SystemMonitor` should
-have to carry. `etop` depends on `cpumon`; nothing depends on the
+have to carry. `etop` depends on `libsysmon`; nothing depends on the
 dashboard.
 
 ## Working on it
@@ -26,13 +31,13 @@ bun test                    # runs both suites
 bun run typecheck           # type-checks both
 
 bun run cpumon -- --fetch   # the CLI, rebuilt first
-bun run tui                 # the dashboard, rebuilt first
+bun run etop                # the dashboard, rebuilt first
 ```
 
-Per package: `bun run --filter cpumon test`, `bun run --filter etop build`, and
+Per package: `bun run --filter libsysmon test`, `bun run --filter etop build`, and
 so on. The root scripts all fan out that way rather than calling `bun test` at
 the root, and that is deliberate: Bun runs a whole suite in one process, and
-`cpumon`'s render tests set `chalk.level = 0`, which would strip the colour the
+`libsysmon`'s render tests set `chalk.level = 0`, which would strip the colour the
 dashboard's tests assert on. One process per package keeps them honest.
 
 `bun run test:node` runs the same suites under `node --test`. Worth keeping,
@@ -40,7 +45,7 @@ because under `bun test` `process.execPath` is Bun — so the tests that spawn a
 subprocess would otherwise stop exercising Node, which is what both packages
 actually ship to.
 
-One asymmetry worth knowing about: `cpumon` commits its `bin/` build output to
+One asymmetry worth knowing about: `libsysmon` commits its `bin/` build output to
 git, and `etop` does not commit its `dist/`. That is deliberate rather
 than an oversight — `bin/` mirrors `src/` one file at a time and its diffs are
 readable, while `dist/` is a bundle that churns entirely on any change. The

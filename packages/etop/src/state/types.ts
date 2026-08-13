@@ -8,7 +8,7 @@
  * memo on the CPU graph.
  */
 
-import type { ProcessSortKey } from 'cpumon';
+import type { ProcessSortKey } from 'libsysmon';
 import { DEFAULT_SIGNAL } from './signals.js';
 import type { SignalName } from './signals.js';
 import type { GraphStyle, ThemeName } from '../../types/index.js';

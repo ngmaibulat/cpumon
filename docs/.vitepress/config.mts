@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress';
 // later publish to GitHub Pages at ngmaibulat.github.io/cpumon, change it to
 // '/cpumon/' - every asset and link is resolved against it.
 export default defineConfig({
-    title: 'cpumon',
+    title: 'libsysmon',
     description: 'CPU monitor library and CLI tool for Node.js',
     base: '/',
     lang: 'en-US',

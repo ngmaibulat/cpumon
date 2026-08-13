@@ -8,7 +8,7 @@
  * most of it is reclaimable. MemoryInfo already carries every field for it.
  *
  * Swap is omitted entirely when the machine has none, rather than shown as
- * 0 of 0. That is what cpumon's own renderMemory does, and a row that is always
+ * 0 of 0. That is what libsysmon's own renderMemory does, and a row that is always
  * zero teaches people to stop reading the panel.
  *
  * The source badge. On the 'os' fallback path there is no MemAvailable
@@ -20,8 +20,8 @@
 import { Box, Text } from 'ink';
 import { memo } from 'react';
 import type { ReactNode } from 'react';
-import { bytes } from 'cpumon/format';
-import type { MemoryInfo } from 'cpumon';
+import { bytes } from 'libsysmon/format';
+import type { MemoryInfo } from 'libsysmon';
 
 import { Gauge } from '../ui/Gauge.js';
 import { Graph } from '../ui/Graph.js';

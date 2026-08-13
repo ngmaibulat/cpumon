@@ -9,7 +9,7 @@
  * Rather than widen CpuMonitor - which would change a documented contract for
  * every existing consumer - the baseline bookkeeping lives here, and every
  * collector stays a pure function. CpuMonitor is untouched and remains the
- * cheap CPU-only path behind the `cpumon/cpu` entry point.
+ * cheap CPU-only path behind the `libsysmon/cpu` entry point.
  *
  * The event is 'sample', deliberately not 'cpudata': a different payload under
  * a familiar name would be a trap for anyone swapping one class for the other.

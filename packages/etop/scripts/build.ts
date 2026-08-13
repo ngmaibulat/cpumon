@@ -2,7 +2,7 @@
 //
 // Deliberately unlike the parent package's build, in two ways.
 //
-// It bundles. cpumon is a library, so its bin/ mirrors src/ one-to-one and each
+// It bundles. libsysmon is a library, so its bin/ mirrors src/ one-to-one and each
 // module keeps its own .d.ts. etop is an application: nothing downstream
 // resolves an individual module of it, so a bundle is simpler and starts faster.
 //
@@ -35,7 +35,7 @@ async function build()
         // matches "engines": { "node": ">=22" }, which is ink 7's floor. Bun takes
         // no version here; the output is plain Node ESM.
         target: 'node',
-        // ink / react / cpumon resolve from node_modules at runtime
+        // ink / react / libsysmon resolve from node_modules at runtime
         packages: 'external',
         // the entries share nearly all their code; without this it is emitted
         // into every one of them
@@ -59,7 +59,7 @@ async function build()
 await build();
 
 if (process.argv.includes('--watch')) {
-    // see the note in cpumon's build.ts: bun --watch tracks imports, not src/
+    // see the note in libsysmon's build.ts: bun --watch tracks imports, not src/
     let pending: ReturnType<typeof setTimeout> | undefined;
 
     watch(SRC, { recursive: true }, () =>

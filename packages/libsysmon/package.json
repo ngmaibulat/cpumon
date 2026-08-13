@@ -1,5 +1,5 @@
 {
-    "name": "cpumon",
+    "name": "libsysmon",
     "version": "0.5.0",
     "description": "System monitor library and CLI tool: CPU, memory, disk, network, processes and containers, as live output or JSON",
     "main": "bin/index.js",
@@ -45,7 +45,7 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ngmaibulat/cpumon.git",
-        "directory": "packages/cpumon"
+        "directory": "packages/libsysmon"
     },
     "keywords": [
         "CPU",

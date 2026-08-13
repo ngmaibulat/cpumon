@@ -1,13 +1,22 @@
 # Changelog
 
+::: info Both packages were renamed before their first release under these names
+The library was published as `cpumon` up to 0.5.0 and is now `libsysmon`; the
+dashboard was developed as `cpumon-tui` and is now `etop`. The command the
+library installs is still `cpumon` — only the package name changed.
+
+Entries below 0.5.0 describe releases made under the old name and are left as
+they were written.
+:::
+
 ## etop 0.1.0
 
 **A full-screen dashboard**, in its own package. CPU with per-core detail,
 memory and swap with a composition breakdown, filesystem usage, per-interface
 network throughput, an interactive process table and container cgroups — all
-from cpumon's existing collectors, drawn with Ink.
+from libsysmon's existing collectors, drawn with Ink.
 
-It is separate on purpose. `cpumon` stays a small library with one runtime
+It is separate on purpose. `libsysmon` stays a small library with one runtime
 dependency; the dashboard is an application that brings React with it, and
 nobody importing `SystemMonitor` should pay for that. See
 [the dashboard guide](/guide/tui).
@@ -16,13 +25,13 @@ nobody importing `SystemMonitor` should pay for that. See
 npx etop
 ```
 
-Needs Node 22. `cpumon` itself still supports Node 18.
+Needs Node 22. `libsysmon` itself still supports Node 18.
 
 ## 0.5.0
 
 Groundwork for the dashboard, and useful on its own.
 
-- **`cpumon/format`** — a new subpath exporting `bytes`, `rate`, `gib`,
+- **`libsysmon/format`** — a new subpath exporting `bytes`, `rate`, `gib`,
   `formatUptime`, `shortId`, `percent` and `duration`. These were locked inside
   `render.ts`, which imports chalk and every collector; the new module imports
   nothing at all. Also re-exported from the barrel. `render.ts` keeps exporting
@@ -36,7 +45,7 @@ Groundwork for the dashboard, and useful on its own.
   resident memory, where cutting first would rank every row by a field none of
   them has yet and hand back the busiest processes presented as the largest. A
   memory sort now pays for a full pass; no other key does.
-- The repository is an npm workspace with two packages, `packages/cpumon` and
+- The repository is an npm workspace with two packages, `packages/libsysmon` and
   `packages/etop`. Nothing about the published `cpumon` tarball changed.
 
 ## 0.4.0
@@ -54,7 +63,7 @@ views, and one new class. Nothing that worked before works differently.
 - `--containers` reports cgroup v2 limits and usage, and detects whether cpumon
   is itself running inside a container.
 - New `SystemMonitor` class emitting a combined `sample` snapshot, plus the
-  `cpumon/system` subpath. `CpuMonitor` and `cpumon/cpu` are unchanged.
+  `libsysmon/system` subpath. `CpuMonitor` and `libsysmon/cpu` are unchanged.
 - Collectors that cannot succeed on a platform return a `Probe` instead of
   throwing. The shape reserved in 0.3.0 is finally used.
 - `--fetch` grew real Disk and Loadavg rows, a Swap row when swap is configured,

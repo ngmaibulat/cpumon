@@ -22,9 +22,9 @@
  * would allocate for nothing.
  */
 
-import { SystemMonitor } from 'cpumon/system';
-import type { CollectorName, SystemSnapshot } from 'cpumon/system';
-import type { ProcessSortKey } from 'cpumon';
+import { SystemMonitor } from 'libsysmon/system';
+import type { CollectorName, SystemSnapshot } from 'libsysmon/system';
+import type { ProcessSortKey } from 'libsysmon';
 
 import { Ring } from '../render/ring.js';
 

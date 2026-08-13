@@ -48,7 +48,7 @@
         /* Must be explicit. TypeScript 5 pulled every @types package in
            node_modules in automatically; 7 does not, and without this the whole
            of `process`, `console` and `os` goes missing from a build that had
-           been fine for years. cpumon-tui already spelled it out, which is why
+           been fine for years. etop already spelled it out, which is why
            it was the only one of the two that still compiled after the bump. */
         "types": [
             "node"

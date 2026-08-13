@@ -7,7 +7,7 @@
  * (etop), and sharing them through render.ts would drag a colour library
  * and every collector into a consumer that wants one function.
  *
- * It is exported both from the barrel and as the 'cpumon/format' subpath. The
+ * It is exported both from the barrel and as the 'libsysmon/format' subpath. The
  * build emits one file per source module rather than a bundle, so the subpath
  * loads exactly this file while the barrel would statically pull in all ~15
  * collectors alongside it.

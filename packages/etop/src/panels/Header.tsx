@@ -9,7 +9,7 @@
 import { Box, Text } from 'ink';
 import { memo } from 'react';
 import os from 'node:os';
-import { formatUptime } from 'cpumon/format';
+import { formatUptime } from 'libsysmon/format';
 
 import { useStyle } from '../hooks/useTheme.js';
 

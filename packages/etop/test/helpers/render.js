@@ -2,7 +2,7 @@
  * Rendering components to a string, for assertions.
  *
  * Tests stay plain .js with React.createElement rather than .tsx, which keeps
- * the flow identical to cpumon's own - build, then `node --test` against the
+ * the flow identical to libsysmon's own - build, then `node --test` against the
  * built output - with no extra transpile step for the test files themselves.
  *
  * ink 7's renderToString needs no terminal and no event listeners, so there is

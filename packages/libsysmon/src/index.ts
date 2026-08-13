@@ -10,7 +10,7 @@
  *
  * Renderers are deliberately NOT re-exported here: they pull in chalk, and
  * keeping them out means a consumer who only wants the numbers does not pay for
- * a terminal-colour library. Import 'cpumon/cpu' or the CLI for those.
+ * a terminal-colour library. Import 'libsysmon/cpu' or the CLI for those.
  *
  * Every collector's pure parseX() is exported alongside its reader. They are
  * the part worth reusing when the data comes from somewhere other than this
@@ -58,7 +58,7 @@ export type {
 export type { CollectorOptions } from './collectors/proc.js';
 
 // the one part of the presentation layer that is chalk-free, so it can live
-// here; 'cpumon/format' reaches the same functions without loading a collector
+// here; 'libsysmon/format' reaches the same functions without loading a collector
 export {
     bytes,
     duration,

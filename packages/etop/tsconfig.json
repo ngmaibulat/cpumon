@@ -10,7 +10,7 @@
          with no DOM. Its event types reference DOM interfaces the parent's
          `lib: ["ES2022", "ScriptHost"]` does not provide. Turning that flag off
          "for cleanliness" breaks this package. */
-    "extends": "../cpumon/tsconfig.json",
+    "extends": "../libsysmon/tsconfig.json",
     "include": [
         "src/**/*.ts",
         "src/**/*.tsx",

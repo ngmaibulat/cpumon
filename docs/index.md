@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: cpumon
+  name: libsysmon
   text: The machine, at a glance
   tagline: A zero-config CLI and a small ESM library for CPU, memory, disk, network, processes and containers in Node.js.
   actions:
@@ -21,7 +21,7 @@ hero:
 
 features:
   - title: Run it with no install
-    details: npx cpumon@latest draws a live bar per core. Flags for memory, load average, disk, network throughput, the busiest processes, and container limits.
+    details: npx -p libsysmon cpumon draws a live bar per core. Flags for memory, load average, disk, network throughput, the busiest processes, and container limits.
   - title: Everything composes with --json
     details: --json is a format, not a view, so any metric can be piped into jq. Machine-readable output has one stable schema on every platform.
   - title: Use it as a library
@@ -37,7 +37,7 @@ features:
 ---
 
 ```sh
-npx cpumon@latest --fetch
+npx -p libsysmon cpumon --fetch
 ```
 
 ```

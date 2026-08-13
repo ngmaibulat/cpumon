@@ -3,7 +3,7 @@
 Everything on this page is exported from the package root:
 
 ```javascript
-import { CpuMonitor, getCpuInfo, aggregateCpu } from 'cpumon';
+import { CpuMonitor, getCpuInfo, aggregateCpu } from 'libsysmon';
 ```
 
 ## `CpuMonitor`
@@ -421,7 +421,7 @@ cgroup v2.
 ## `SystemMonitor`
 
 ```typescript
-import { SystemMonitor } from 'cpumon';        // or 'cpumon/system'
+import { SystemMonitor } from 'libsysmon';        // or 'libsysmon/system'
 
 const mon = new SystemMonitor({ intervalMs: 1000, collect: ['cpu', 'memory', 'network'] });
 
@@ -453,7 +453,7 @@ A one-shot snapshot of everything that needs no window, for `memory`, `load` and
 
 | Specifier | Contents |
 | --- | --- |
-| `cpumon` | Everything on this page |
-| `cpumon/cpu` | The `CpuMonitor` module directly |
-| `cpumon/system` | The `SystemMonitor` module directly |
-| `cpumon/package.json` | The manifest |
+| `libsysmon` | Everything on this page |
+| `libsysmon/cpu` | The `CpuMonitor` module directly |
+| `libsysmon/system` | The `SystemMonitor` module directly |
+| `libsysmon/package.json` | The manifest |

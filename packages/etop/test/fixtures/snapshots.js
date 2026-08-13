@@ -3,7 +3,7 @@
  *
  * Panels are asserted against these rather than against live /proc, so a test
  * failure means the panel changed and never means the machine did. The shapes
- * are copied from cpumon's exported types; anything a panel reads must be here.
+ * are copied from libsysmon's exported types; anything a panel reads must be here.
  */
 
 export const memory = (over = {}) => ({

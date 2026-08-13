@@ -26,7 +26,7 @@ test('a first frame with no snapshot yet drops nothing', () => {
 
 test('a concept this platform has not got loses its panel entirely', () => {
     // not an empty box - removed, so the rest reflow into the space. This is
-    // the rule probeRow() already follows in cpumon's own renderer.
+    // the rule probeRow() already follows in libsysmon's own renderer.
     const { absent } = presentPanels(snapshot({
         network: unavailable('unsupported-platform'),
         processes: unavailable('unsupported-platform'),

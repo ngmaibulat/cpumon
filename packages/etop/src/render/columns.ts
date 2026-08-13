@@ -4,7 +4,7 @@
  * Two rules, both learned from the version this replaces.
  *
  * Widths are computed from plain text and colour is applied afterwards.
- * cpumon's render.ts::table() measures cells with `.length`, which counts the
+ * libsysmon's render.ts::table() measures cells with `.length`, which counts the
  * escape sequences in a pre-coloured cell as visible characters - so colouring
  * one cell silently misaligns the column. Here a cell is a string with no
  * styling in it, and the component wraps the padded result.
