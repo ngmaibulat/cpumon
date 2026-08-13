@@ -1,5 +1,44 @@
 # Changelog
 
+## cpumon-tui 0.1.0
+
+**A full-screen dashboard**, in its own package. CPU with per-core detail,
+memory and swap with a composition breakdown, filesystem usage, per-interface
+network throughput, an interactive process table and container cgroups — all
+from cpumon's existing collectors, drawn with Ink.
+
+It is separate on purpose. `cpumon` stays a small library with one runtime
+dependency; the dashboard is an application that brings React with it, and
+nobody importing `SystemMonitor` should pay for that. See
+[the dashboard guide](/guide/tui).
+
+```sh
+npx cpumon-tui
+```
+
+Needs Node 22. `cpumon` itself still supports Node 18.
+
+## 0.5.0
+
+Groundwork for the dashboard, and useful on its own.
+
+- **`cpumon/format`** — a new subpath exporting `bytes`, `rate`, `gib`,
+  `formatUptime`, `shortId`, `percent` and `duration`. These were locked inside
+  `render.ts`, which imports chalk and every collector; the new module imports
+  nothing at all. Also re-exported from the barrel. `render.ts` keeps exporting
+  `bytes` and `rate`, so nothing that worked before changed.
+- **`selectProcesses()`** and a sort key on `SystemMonitorOptions` — the top-N
+  cut can now be taken on cpu, memory, pid, name or thread count, in either
+  direction.
+
+  The ordering rule is the substance of it. `attachRss()` costs a second file
+  read per process, so it belongs *after* the cut — except when the sort key is
+  resident memory, where cutting first would rank every row by a field none of
+  them has yet and hand back the busiest processes presented as the largest. A
+  memory sort now pays for a full pass; no other key does.
+- The repository is an npm workspace with two packages, `packages/cpumon` and
+  `packages/cpumon-tui`. Nothing about the published `cpumon` tarball changed.
+
 ## 0.4.0
 
 **cpumon is a system monitor now, not only a CPU monitor.** Six collectors, six

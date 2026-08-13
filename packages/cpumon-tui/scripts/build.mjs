@@ -10,7 +10,13 @@
 // wasm through esbuild's loaders for no benefit, and react-devtools-core is an
 // optional dynamic require that esbuild cannot statically satisfy.
 
+import { rmSync } from 'node:fs';
 import * as esbuild from 'esbuild';
+
+// Splitting gives the shared chunks content-hashed names, so every build leaves
+// the previous build's chunks behind. Nothing imports them and nothing notices
+// - until `npm pack` ships a tarball five times the size of the code in it.
+rmSync('dist', { recursive: true, force: true });
 
 const options = {
     // cli.tsx carries the shebang, index.ts is the programmatic entry, and
