@@ -45,8 +45,22 @@ export type ProcessPanelProps = {
     sortReverse: boolean;
     filter: string;
     expanded: boolean;
-    /** told the real row count and window size, so the reducer can be corrected */
-    onMetrics: (rowCount: number, windowRows: number) => void;
+    /**
+     * What the panel is actually showing.
+     *
+     * The reducer cannot know the row count or the window height, and the kill
+     * modal cannot know which process the selection lands on - all three depend
+     * on data and layout that only this component has resolved.
+     */
+    onView: (view: ProcessView) => void;
+};
+
+
+export type ProcessView = {
+    rowCount: number;
+    windowRows: number;
+    /** the row under the cursor, or null when the list is empty */
+    selected: ProcessLoad | null;
 };
 
 
@@ -115,7 +129,7 @@ export const ProcessPanel = memo(function ProcessPanel({
     sortReverse,
     filter,
     expanded,
-    onMetrics,
+    onView,
 }: ProcessPanelProps)
 {
     const store = useStore();
@@ -132,9 +146,11 @@ export const ProcessPanel = memo(function ProcessPanel({
     // the interior, less the header row and the detail line when it is open
     const bodyRows = Math.max(0, height - 3 - (expanded ? 1 : 0));
 
+    const current = processes[selected] ?? null;
+
     useEffect(() => {
-        onMetrics(processes.length, bodyRows);
-    }, [onMetrics, processes.length, bodyRows]);
+        onView({ rowCount: processes.length, windowRows: bodyRows, selected: current });
+    }, [onView, processes.length, bodyRows, current]);
 
     // ask for more than is visible so scrolling never restarts the monitor,
     // and for everything while a filter is narrowing the list
@@ -147,8 +163,6 @@ export const ProcessPanel = memo(function ProcessPanel({
     }, [store, sort, sortReverse]);
 
     const rows = useMemo(() => processes.map(toRow), [processes]);
-
-    const current = processes[selected];
 
     return (
         <Panel
@@ -196,7 +210,7 @@ export const ProcessPanel = memo(function ProcessPanel({
                             sortReverse={sortReverse}
                             rowColor={index => rampStep(theme.cpu, (processes[index]?.cpuPercentage ?? 0) / 100)}
                         />
-                        {expanded && current !== undefined
+                        {expanded && current !== null
                             ? <Detail process={current} width={inner} />
                             : null}
                     </Box>

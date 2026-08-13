@@ -12,7 +12,7 @@
  */
 
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
 import { useStore, useStoreState } from './hooks/useStore.js';
@@ -26,27 +26,33 @@ import { DiskPanel } from './panels/DiskPanel.js';
 import { Footer } from './panels/Footer.js';
 import { Header } from './panels/Header.js';
 import { HelpOverlay } from './panels/HelpOverlay.js';
+import { KillModal } from './panels/KillModal.js';
 import { MemoryPanel } from './panels/MemoryPanel.js';
 import { NetworkPanel } from './panels/NetworkPanel.js';
 import { ProcessPanel } from './panels/ProcessPanel.js';
 import { FilterInput } from './ui/FilterInput.js';
 import { Panel } from './ui/Panel.js';
+import { sendSignal } from './state/signals.js';
 import { resolveGraphStyle } from './term/capabilities.js';
 import type { Capabilities } from './term/capabilities.js';
 import type { PanelId, UiState } from './state/types.js';
+import type { ProcessView } from './panels/ProcessPanel.js';
+import type { Killer } from './state/signals.js';
 
 
 export type AppProps = {
     capabilities: Capabilities;
     version: string;
     allowKill: boolean;
+    /** test seam: nothing in the suite ever signals a real process */
+    kill?: Killer;
     theme: Parameters<typeof resolveTheme>[0];
     graph: Parameters<typeof resolveGraphStyle>[0];
     intervalMs: number;
 };
 
 
-export function App({ capabilities, version, theme: initialTheme, graph: initialGraph, intervalMs }: AppProps)
+export function App({ capabilities, version, allowKill, kill, theme: initialTheme, graph: initialGraph, intervalMs }: AppProps)
 {
     const { columns, rows } = useWindowSize();
     const { exit } = useApp();
@@ -62,12 +68,24 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
     // is still only one copy of the state for a keypress to act on.
     const [matchCount, setMatchCount] = useState(0);
 
-    const onMetrics = useCallback((rowCount: number, windowRows: number) => {
-        setMatchCount(rowCount);
-        dispatch({ type: 'clamp', rowCount, windowRows });
+    // held in a ref rather than state: the modal reads it once, when it opens,
+    // and re-rendering the whole app every time the row under the cursor
+    // changes identity would defeat every memo below it
+    const view = useRef<ProcessView>({ rowCount: 0, windowRows: 1, selected: null });
+
+    const onView = useCallback((next: ProcessView) => {
+        view.current = next;
+        setMatchCount(next.rowCount);
+        dispatch({ type: 'clamp', rowCount: next.rowCount, windowRows: next.windowRows });
     }, []);
 
     useInput((input, key) => {
+        if (ui.overlay === 'kill') {
+            handleKillKeys(input, key);
+
+            return;
+        }
+
         const action = resolve(input, key, ui);
 
         if (action === null) {
@@ -80,16 +98,91 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
             return;
         }
 
+        // the binding says "open the kill modal"; only here is it known which
+        // process the selection has landed on, so the pid is pinned now rather
+        // than read again at the moment of confirmation
+        if (action.type === 'overlay' && action.overlay === 'kill') {
+            const row = view.current.selected;
+
+            dispatch({
+                type: 'kill-open',
+                target: row === null
+                    ? null
+                    : { pid: row.pid, comm: row.comm, threads: row.threads },
+            });
+
+            return;
+        }
+
         dispatch(action);
     });
+
+    /**
+     * The modal owns the keyboard while it is up.
+     *
+     * Confirmation is `y` rather than Enter, because Enter is muscle memory in
+     * the list this was opened from. Ctrl-C still quits, since a modal that can
+     * trap someone is not a safety feature.
+     */
+    function handleKillKeys(input: string, key: { ctrl?: boolean; escape?: boolean; upArrow?: boolean; downArrow?: boolean })
+    {
+        if (key.ctrl === true && input === 'c') {
+            exit();
+
+            return;
+        }
+
+        if (key.escape === true || input === 'n' || input === 'q') {
+            dispatch({ type: 'kill-close' });
+
+            return;
+        }
+
+        if (input === 'k' || key.upArrow === true) {
+            dispatch({ type: 'kill-move', delta: -1 });
+
+            return;
+        }
+
+        if (input === 'j' || key.downArrow === true) {
+            dispatch({ type: 'kill-move', delta: 1 });
+
+            return;
+        }
+
+        if (input !== 'y') {
+            return;
+        }
+
+        if (!allowKill) {
+            dispatch({ type: 'kill-close' });
+            dispatch({ type: 'message', text: 'signalling is disabled; restart with --allow-kill' });
+
+            return;
+        }
+
+        if (ui.killTarget === null) {
+            dispatch({ type: 'kill-close' });
+
+            return;
+        }
+
+        const result = sendSignal(ui.killTarget.pid, ui.signal, kill);
+
+        dispatch({ type: 'kill-close' });
+        dispatch({ type: 'message', text: result.message });
+    }
 
     // the store owns sampling and the reducer owns intent; these two effects
     // are the only places they meet, and they run after the render that
     // changed the intent rather than inside the key handler - so a keypress
     // never reaches into the monitor mid-frame
     useEffect(() => {
-        store.setPaused(ui.paused);
-    }, [store, ui.paused]);
+        // the modal freezes the view as well as pinning its target, so
+        // cancelling returns to the list that was there rather than to one that
+        // has moved on underneath
+        store.setPaused(ui.paused || ui.overlay === 'kill');
+    }, [store, ui.paused, ui.overlay]);
 
     useEffect(() => {
         store.setIntervalMs(ui.intervalMs);
@@ -132,6 +225,16 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
                 <Box flexGrow={1} flexDirection="column" overflow="hidden">
                     {ui.overlay === 'help'
                         ? <HelpOverlay width={columns} height={rows - 2} />
+                        : ui.overlay === 'kill'
+                        ? (
+                            <KillModal
+                                width={columns}
+                                height={rows - 2}
+                                target={ui.killTarget}
+                                signal={ui.signal}
+                                allowed={allowKill}
+                            />
+                        )
                         : layout.rows.map((band, i) => (
                             // the band carries the height its panels agreed on,
                             // so a panel that renders short cannot let the next
@@ -145,7 +248,7 @@ export function App({ capabilities, version, theme: initialTheme, graph: initial
                                         height={rect.height}
                                         focused={rect.panel === ui.focus}
                                         ui={ui}
-                                        onMetrics={onMetrics}
+                                        onView={onView}
                                     />
                                 ))}
                             </Box>
@@ -169,11 +272,11 @@ type PanelForProps = {
     height: number;
     focused: boolean;
     ui: UiState;
-    onMetrics: (rowCount: number, windowRows: number) => void;
+    onView: (view: ProcessView) => void;
 };
 
 
-function PanelFor({ panel, width, height, focused, ui, onMetrics }: PanelForProps)
+function PanelFor({ panel, width, height, focused, ui, onView }: PanelForProps)
 {
     switch (panel) {
         case 'cpu':
@@ -208,7 +311,7 @@ function PanelFor({ panel, width, height, focused, ui, onMetrics }: PanelForProp
                     sortReverse={ui.sortReverse}
                     filter={ui.filter}
                     expanded={ui.expanded}
-                    onMetrics={onMetrics}
+                    onView={onView}
                 />
             );
 
@@ -222,7 +325,7 @@ function PanelFor({ panel, width, height, focused, ui, onMetrics }: PanelForProp
 
 /** a real frame in the right place, so the layout can be judged before the
  *  panel that fills it exists */
-function Placeholder({ panel, width, height, focused }: Omit<PanelForProps, 'ui' | 'onMetrics'>)
+function Placeholder({ panel, width, height, focused }: Omit<PanelForProps, 'ui' | 'onView'>)
 {
     return (
         <Panel title={panel.toUpperCase()} width={width} height={height} focused={focused}>

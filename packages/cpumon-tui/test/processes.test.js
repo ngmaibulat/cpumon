@@ -44,7 +44,7 @@ const render = (props, options = {}) => draw(
         sortReverse: false,
         filter: '',
         expanded: false,
-        onMetrics: () => {},
+        onView: () => {},
         ...props,
     }),
     { columns: 60, ...options },
@@ -187,11 +187,35 @@ test('the panel reports its row count and window size', () => {
     const store = fakeStore(Ring, { snapshot: withProcs(PROCS) });
     const seen = [];
 
-    render({ onMetrics: (rows, window) => seen.push([rows, window]) }, { store });
+    render({ onView: view => seen.push(view) }, { store });
 
-    assert.ok(seen.length > 0, 'onMetrics should have been called');
-    assert.equal(seen[0][0], 3);
-    assert.ok(seen[0][1] > 0);
+    assert.ok(seen.length > 0, 'onView should have been called');
+    assert.equal(seen[0].rowCount, 3);
+    assert.ok(seen[0].windowRows > 0);
+});
+
+
+test('the panel reports which process the selection landed on', () => {
+    // the kill modal cannot work this out for itself: it depends on the sort,
+    // the filter and the scroll position, all of which live here
+    const store = fakeStore(Ring, { snapshot: withProcs(PROCS) });
+    const seen = [];
+
+    render({ selected: 1, onView: view => seen.push(view) }, { store });
+
+    assert.equal(seen[0].selected.pid, 22);
+    assert.equal(seen[0].selected.comm, 'node');
+});
+
+
+test('an empty list reports no selection rather than a phantom one', () => {
+    const store = fakeStore(Ring, { snapshot: withProcs(PROCS) });
+    const seen = [];
+
+    render({ filter: 'zzz', onView: view => seen.push(view) }, { store });
+
+    assert.equal(seen[0].rowCount, 0);
+    assert.equal(seen[0].selected, null);
 });
 
 
@@ -199,7 +223,7 @@ test('the reported row count is what survives the filter', () => {
     const store = fakeStore(Ring, { snapshot: withProcs(PROCS) });
     const seen = [];
 
-    render({ filter: 'post', onMetrics: rows => seen.push(rows) }, { store });
+    render({ filter: 'post', onView: view => seen.push(view.rowCount) }, { store });
 
     assert.equal(seen[0], 1);
 });
@@ -247,7 +271,7 @@ test('the panel fits every size it might be given', () => {
                 h(ProcessPanel, {
                     width, height,
                     selected: 2, scroll: 0, sort: 'cpu', sortReverse: false,
-                    filter: '', expanded: false, onMetrics: () => {},
+                    filter: '', expanded: false, onView: () => {},
                 }),
                 { columns: width, store },
             );

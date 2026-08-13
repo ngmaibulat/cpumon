@@ -94,3 +94,9 @@ export { ProcessPanel, matches } from './panels/ProcessPanel.js';
 export { FilterInput } from './ui/FilterInput.js';
 
 export { App } from './app.js';
+
+export { KillModal } from './panels/KillModal.js';
+export { DEFAULT_SIGNAL, SIGNALS, sendSignal } from './state/signals.js';
+export type { KillResult, Killer, SignalChoice, SignalName } from './state/signals.js';
+export type { KillTarget } from './state/types.js';
+export type { ProcessView } from './panels/ProcessPanel.js';

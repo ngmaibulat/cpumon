@@ -9,6 +9,8 @@
  */
 
 import type { ProcessSortKey } from 'cpumon';
+import { DEFAULT_SIGNAL } from './signals.js';
+import type { SignalName } from './signals.js';
 import type { GraphStyle, ThemeName } from '../../types/index.js';
 
 
@@ -19,6 +21,13 @@ export const PANEL_ORDER: PanelId[] = ['cpu', 'memory', 'disk', 'network', 'proc
 
 
 export type Overlay = 'none' | 'help' | 'kill';
+
+
+export type KillTarget = {
+    pid: number;
+    comm: string;
+    threads: number;
+};
 
 
 export type UiState = {
@@ -56,6 +65,20 @@ export type UiState = {
     /** disk panel */
     mountIndex: number;
 
+    /** which signal the kill modal has highlighted */
+    signal: SignalName;
+    /**
+     * What the modal is confirming, captured whole when it opened.
+     *
+     * Pinned rather than re-read from the selection at confirm time, and it
+     * carries the name as well as the pid so that the thing on screen and the
+     * thing that gets signalled are the same object. The table underneath is
+     * still sampling; without this, a row arriving or leaving between opening
+     * the modal and pressing y would mean confirming one process and killing
+     * another.
+     */
+    killTarget: KillTarget | null;
+
     /** the last thing that happened, shown in the footer until the next one */
     message: string | null;
 };
@@ -86,6 +109,9 @@ export type Action =
     | { type: 'interface'; delta: 1 | -1 }
     | { type: 'toggle-bits' }
     | { type: 'escape' }
+    | { type: 'kill-open'; target: KillTarget | null }
+    | { type: 'kill-move'; delta: 1 | -1 }
+    | { type: 'kill-close' }
     | { type: 'message'; text: string | null }
     /**
      * Bring selection and scroll into range.
@@ -125,6 +151,8 @@ export function initialUi(intervalMs: number, theme: ThemeName, graph: GraphStyl
         interfaceIndex: 0,
         bits: false,
         mountIndex: 0,
+        signal: DEFAULT_SIGNAL,
+        killTarget: null,
         message: null,
     };
 }

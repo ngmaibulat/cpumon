@@ -16,6 +16,7 @@
 import { PANEL_ORDER } from './types.js';
 import { MAX_INTERVAL_MS, MIN_INTERVAL_MS } from './types.js';
 import { nextTheme } from '../theme/index.js';
+import { DEFAULT_SIGNAL, SIGNALS } from './signals.js';
 import type { Action, PanelId, UiState } from './types.js';
 import type { GraphStyle } from '../../types/index.js';
 
@@ -163,6 +164,10 @@ export function reduce(state: UiState, action: Action): UiState
 
         case 'escape':
             // one key, in priority order: whatever is most "on top" closes
+            if (state.overlay === 'kill') {
+                return reduce(state, { type: 'kill-close' });
+            }
+
             if (state.overlay !== 'none') {
                 return { ...state, overlay: 'none' };
             }
@@ -176,6 +181,28 @@ export function reduce(state: UiState, action: Action): UiState
             }
 
             return { ...state, message: null };
+
+        case 'kill-open':
+            return {
+                ...state,
+                overlay: 'kill',
+                // pinned now, not re-read from the selection at confirm time
+                killTarget: action.target,
+                // always back to the safe default: a SIGKILL chosen for one
+                // process must not be waiting, pre-selected, for the next
+                signal: DEFAULT_SIGNAL,
+                message: null,
+            };
+
+        case 'kill-move': {
+            const index = SIGNALS.findIndex(item => item.name === state.signal);
+            const next = SIGNALS[(index + action.delta + SIGNALS.length) % SIGNALS.length];
+
+            return { ...state, signal: next.name };
+        }
+
+        case 'kill-close':
+            return { ...state, overlay: 'none', killTarget: null, signal: DEFAULT_SIGNAL };
 
         case 'message':
             return { ...state, message: action.text };
