@@ -30,7 +30,7 @@ test('a piped stdout is refused before anything is drawn', () => {
 
 
 test('a redirected stdin is refused, even with a terminal on stdout', () => {
-    // `cpumon-tui < /dev/null` is the case that otherwise gets all the way into
+    // `etop < /dev/null` is the case that otherwise gets all the way into
     // a render before ink throws "Raw mode is not supported"
     const refusal = checkRefusal({ ...tty, stdin: {} }, term);
 

@@ -47,7 +47,7 @@ export type Streams = {
 /**
  * Whether the environment supports a full-screen interactive app.
  *
- * The stdin check is the one that is easy to miss. `cpumon-tui < /dev/null` has
+ * The stdin check is the one that is easy to miss. `etop < /dev/null` has
  * a perfectly good TTY on stdout, and Ink will happily start and then throw
  * "Raw mode is not supported" from inside a render - by which point the
  * alternate screen is already up and the error lands where nobody can read it.

@@ -1,5 +1,5 @@
 /**
- * The public surface of cpumon-tui, hand-written rather than generated.
+ * The public surface of etop, hand-written rather than generated.
  *
  * Everything inside src/ is an application's internals, not a contract, and a
  * generated declaration tree would also make @types/react a resolution

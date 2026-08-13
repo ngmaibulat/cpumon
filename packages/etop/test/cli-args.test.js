@@ -107,7 +107,7 @@ test('the help points at cpumon for anything scriptable', () => {
 test('--help and --version exit zero without needing a terminal', () => {
     const help = run(['--help']);
     assert.equal(help.status, 0);
-    assert.match(help.stdout, /Usage:\s+cpumon-tui/);
+    assert.match(help.stdout, /Usage:\s+etop/);
 
     const version = run(['--version']);
     assert.equal(version.status, 0);

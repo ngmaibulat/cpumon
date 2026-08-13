@@ -4,7 +4,7 @@
  * Unlike render.ts this module imports nothing at all - not chalk, not os, not
  * a collector. That is the point of its existence. The renderers here are the
  * only part of the presentation layer worth sharing with an out-of-tree UI
- * (cpumon-tui), and sharing them through render.ts would drag a colour library
+ * (etop), and sharing them through render.ts would drag a colour library
  * and every collector into a consumer that wants one function.
  *
  * It is exported both from the barrel and as the 'cpumon/format' subpath. The

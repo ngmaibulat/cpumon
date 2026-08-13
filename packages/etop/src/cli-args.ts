@@ -1,5 +1,5 @@
 /**
- * Argument parsing and help text for the `cpumon-tui` binary.
+ * Argument parsing and help text for the `etop` binary.
  *
  * Split from cli.tsx for the same reason cpumon splits cli.ts from cpumon.ts:
  * nothing here writes to a stream or exits, so a test can call it directly
@@ -163,9 +163,9 @@ export function buildHelp(): string
     const width = Math.max(...flags.map(flag => flag.length));
 
     return [
-        'cpumon-tui - a full-screen dashboard for CPU, memory, disk, network and processes',
+        'etop - a full-screen dashboard for CPU, memory, disk, network and processes',
         '',
-        'Usage:  cpumon-tui [options]',
+        'Usage:  etop [options]',
         '',
         'Options:',
         ...OPTIONS.map((opt, i) => {

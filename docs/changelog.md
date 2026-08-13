@@ -1,6 +1,6 @@
 # Changelog
 
-## cpumon-tui 0.1.0
+## etop 0.1.0
 
 **A full-screen dashboard**, in its own package. CPU with per-core detail,
 memory and swap with a composition breakdown, filesystem usage, per-interface
@@ -13,7 +13,7 @@ nobody importing `SystemMonitor` should pay for that. See
 [the dashboard guide](/guide/tui).
 
 ```sh
-npx cpumon-tui
+npx etop
 ```
 
 Needs Node 22. `cpumon` itself still supports Node 18.
@@ -37,7 +37,7 @@ Groundwork for the dashboard, and useful on its own.
   them has yet and hand back the busiest processes presented as the largest. A
   memory sort now pays for a full pass; no other key does.
 - The repository is an npm workspace with two packages, `packages/cpumon` and
-  `packages/cpumon-tui`. Nothing about the published `cpumon` tarball changed.
+  `packages/etop`. Nothing about the published `cpumon` tarball changed.
 
 ## 0.4.0
 

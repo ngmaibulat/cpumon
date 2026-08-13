@@ -1,21 +1,21 @@
 # The dashboard
 
-`cpumon-tui` is a full-screen terminal dashboard built on the same collectors as
+`etop` is a full-screen terminal dashboard built on the same collectors as
 the `cpumon` CLI: CPU with per-core detail, memory and swap, filesystem usage,
 per-interface network throughput, an interactive process table, and container
 cgroups.
 
 ```sh
-npx cpumon-tui
+npx etop
 ```
 
 It is a **separate package**. `cpumon` stays a small library with one runtime
 dependency; the dashboard is an application that brings React and a terminal
 renderer with it, and nobody importing `SystemMonitor` should have to carry
-that. `cpumon-tui` depends on `cpumon`; nothing depends on the dashboard.
+that. `etop` depends on `cpumon`; nothing depends on the dashboard.
 
 ```sh
-npm install -g cpumon-tui     # then just: cpumon-tui
+npm install -g etop     # then just: etop
 ```
 
 Node 22 or newer. `cpumon` itself still supports Node 18.

@@ -118,7 +118,7 @@ test('the format module pulls in nothing at all', async () => {
     const { readFileSync } = await import('node:fs');
     const source = readFileSync(new URL('../bin/format.js', import.meta.url), 'utf8');
 
-    // the whole reason format.ts exists is that cpumon-tui can import it
+    // the whole reason format.ts exists is that etop can import it
     // without dragging chalk or a collector along. an import statement here
     // would quietly undo that.
     assert.ok(!/^\s*import\s/m.test(source), 'bin/format.js must have no imports');

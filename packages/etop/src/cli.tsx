@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * The `cpumon-tui` binary.
+ * The `etop` binary.
  *
  * Thin by design, like cpumon's own: parsing lives in cli-args.ts, everything
  * else behind runTui(). This is the only file in the package with a top-level
@@ -26,7 +26,7 @@ async function main(): Promise<number>
     const major = Number(process.versions.node.split('.')[0]);
 
     if (major < MINIMUM_NODE) {
-        console.error(`cpumon-tui: needs Node ${MINIMUM_NODE} or newer, found ${process.versions.node}`);
+        console.error(`etop: needs Node ${MINIMUM_NODE} or newer, found ${process.versions.node}`);
         console.error('  `cpumon --bars` works on Node 18 and up');
 
         return 1;
@@ -39,8 +39,8 @@ async function main(): Promise<number>
     }
     catch (err) {
         if (err instanceof CliError) {
-            console.error(`cpumon-tui: ${err.message}`);
-            console.error("Try 'cpumon-tui --help' for the list of options.");
+            console.error(`etop: ${err.message}`);
+            console.error("Try 'etop --help' for the list of options.");
 
             return err.exitCode;
         }

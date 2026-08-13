@@ -3,7 +3,7 @@
 // Deliberately unlike the parent package's build, in two ways.
 //
 // It bundles. cpumon is a library, so its bin/ mirrors src/ one-to-one and each
-// module keeps its own .d.ts. cpumon-tui is an application: nothing downstream
+// module keeps its own .d.ts. etop is an application: nothing downstream
 // resolves an individual module of it, so a bundle is simpler and starts faster.
 //
 // node_modules stays external, though. Bundling ink would drag yoga-layout's

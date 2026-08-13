@@ -191,7 +191,7 @@ test('the binary refuses every environment it cannot draw in, and says why', () 
         // never on stdout: whatever is reading that pipe wants data, and a
         // friendly message is still garbage to it
         assert.equal(result.stdout, '', JSON.stringify(env));
-        assert.match(result.stderr, /cpumon-tui:/, JSON.stringify(env));
+        assert.match(result.stderr, /etop:/, JSON.stringify(env));
         // and always with somewhere else to go
         assert.match(result.stderr, /cpumon/, JSON.stringify(env));
     }

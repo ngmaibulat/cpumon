@@ -1,5 +1,5 @@
 {
-    "name": "cpumon-tui",
+    "name": "etop",
     "version": "0.1.0",
     "description": "Full-screen terminal dashboard for cpumon: CPU, memory, disk, network, processes and containers",
     "type": "module",
@@ -13,7 +13,7 @@
         "./package.json": "./package.json"
     },
     "bin": {
-        "cpumon-tui": "./dist/cli.js"
+        "etop": "./dist/cli.js"
     },
     "files": [
         "dist",
@@ -33,7 +33,7 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ngmaibulat/cpumon.git",
-        "directory": "packages/cpumon-tui"
+        "directory": "packages/etop"
     },
     "keywords": [
         "TUI",

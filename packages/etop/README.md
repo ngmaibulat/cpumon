@@ -1,15 +1,15 @@
-# cpumon-tui
+# etop
 
 A full-screen terminal dashboard for CPU, memory, disk, network, processes and
 containers — built on [`cpumon`](https://www.npmjs.com/package/cpumon)'s
 collectors, drawn with [Ink](https://github.com/vadimdemedes/ink).
 
 ```sh
-npx cpumon-tui
+npx etop
 ```
 
 ```
-cpumon-tui 0.1.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
+etop 0.1.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
 ╭────────────────────────────────────╮╭────────────────────────────────────╮
 │CPU 16C                          21%││MEM                              66%│
 │                    ▄▆▅▄▄▄▄▃▂▁▄▃▄▄▆▅││MEM  [███████▍   ] 14.7 / 22.3 GiB  │
@@ -31,8 +31,8 @@ q quit · ? help · Tab panel · Space pause · / filter
 ## Install
 
 ```sh
-npm install -g cpumon-tui
-cpumon-tui
+npm install -g etop
+etop
 ```
 
 Node 22 or newer. If you only want numbers to script against, install

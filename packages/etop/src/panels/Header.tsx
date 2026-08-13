@@ -29,7 +29,7 @@ export const Header = memo(function Header({ width, version, intervalMs, paused 
     // os.uptime() is a syscall, but this renders once a tick at most and the
     // alternative is threading a static fact through the store for no reason
     const facts = [
-        `cpumon-tui ${version}`,
+        `etop ${version}`,
         os.hostname(),
         `${os.type()} ${os.release()}`,
         `up ${formatUptime(os.uptime())}`,

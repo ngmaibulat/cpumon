@@ -41,7 +41,7 @@ export async function runTui(options: TuiOptions = {}): Promise<number>
     const capabilities = detectCapabilities(options);
 
     if (capabilities.refusal !== null) {
-        console.error(`cpumon-tui: ${capabilities.refusal.message}`);
+        console.error(`etop: ${capabilities.refusal.message}`);
         console.error(`  ${capabilities.refusal.suggestion}`);
 
         return 1;
