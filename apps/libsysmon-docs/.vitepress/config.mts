@@ -1,11 +1,12 @@
 import { defineConfig } from 'vitepress';
 
-// `base` assumes the site is served from the root of its own domain. If you
-// later publish to GitHub Pages at ngmaibulat.github.io/cpumon, change it to
-// '/cpumon/' - every asset and link is resolved against it.
+// `base` assumes this site is served from the root of its own domain, which is
+// the arrangement the two sites were split for. If libsysmon and etop ever share
+// a host, only the second one needs a prefix - and every asset and link in it
+// resolves against that prefix, so it is not a one-line change.
 export default defineConfig({
     title: 'libsysmon',
-    description: 'CPU monitor library and CLI tool for Node.js',
+    description: 'System monitor library and cpumon CLI for Node.js',
     base: '/',
     lang: 'en-US',
     cleanUrls: true,
@@ -14,9 +15,10 @@ export default defineConfig({
         nav: [
             { text: 'Guide', link: '/guide/getting-started' },
             { text: 'CLI', link: '/guide/cli' },
-            { text: 'Dashboard', link: '/guide/tui' },
             { text: 'API', link: '/api/' },
             { text: 'Changelog', link: '/changelog' },
+            // TODO: swap for the etop site's own domain once it has one
+            { text: 'etop ↗', link: 'https://github.com/ngmaibulat/cpumon/tree/main/packages/etop' },
         ],
 
         sidebar: [
@@ -25,7 +27,6 @@ export default defineConfig({
                 items: [
                     { text: 'Getting started', link: '/guide/getting-started' },
                     { text: 'CLI reference', link: '/guide/cli' },
-                    { text: 'The dashboard', link: '/guide/tui' },
                     { text: 'Library guide', link: '/guide/library' },
                 ],
             },
@@ -47,7 +48,7 @@ export default defineConfig({
         },
 
         editLink: {
-            pattern: 'https://github.com/ngmaibulat/cpumon/edit/main/docs/:path',
+            pattern: 'https://github.com/ngmaibulat/cpumon/edit/main/apps/libsysmon-docs/:path',
             text: 'Edit this page on GitHub',
         },
 

@@ -2,30 +2,13 @@
 
 ::: info Both packages were renamed before their first release under these names
 The library was published as `cpumon` up to 0.5.0 and is now `libsysmon`; the
-dashboard was developed as `cpumon-tui` and is now `etop`. The command the
-library installs is still `cpumon` — only the package name changed.
+dashboard was developed as `cpumon-tui` and is now `etop`, with a site and a
+changelog of its own. The command this package installs is still `cpumon` —
+only the package name changed.
 
 Entries below 0.5.0 describe releases made under the old name and are left as
 they were written.
 :::
-
-## etop 0.1.0
-
-**A full-screen dashboard**, in its own package. CPU with per-core detail,
-memory and swap with a composition breakdown, filesystem usage, per-interface
-network throughput, an interactive process table and container cgroups — all
-from libsysmon's existing collectors, drawn with Ink.
-
-It is separate on purpose. `libsysmon` stays a small library with one runtime
-dependency; the dashboard is an application that brings React with it, and
-nobody importing `SystemMonitor` should pay for that. See
-[the dashboard guide](/guide/tui).
-
-```sh
-npx etop
-```
-
-Needs Node 22. `libsysmon` itself still supports Node 18.
 
 ## 0.5.0
 

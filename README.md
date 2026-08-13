@@ -53,11 +53,18 @@ dashboard builds from `prepack` instead.
 
 ## Docs
 
-The VitePress site lives in `docs/` and covers both packages.
+One VitePress site per package, under `apps/`. They are separate because the
+packages release separately, and a shared site would have to pretend otherwise.
 
 ```sh
-bun run docs:dev
+bun run docs:libsysmon      # apps/libsysmon-docs
+bun run docs:etop           # apps/etop-docs
+bun run docs:build          # builds both
 ```
+
+Both are configured for `base: '/'`, i.e. each site owning its own domain. If
+they ever share a host, the second one needs a path prefix and every asset and
+internal link in it resolves against that prefix.
 
 ## Licence
 

@@ -155,7 +155,7 @@ cpumon --fetch
 ```
 
 ```
-cpumon 0.4.0
+cpumon 0.5.0
 ──────────────────────────────────────────────
 CPU       AMD Ryzen 7 7730U with Radeon Graphics
 Cores     16

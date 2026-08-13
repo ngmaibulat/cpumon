@@ -53,7 +53,7 @@ View flags select *what* to show and are mutually exclusive. `--json` selects
 `cpumon --fetch` prints a one-shot summary:
 
 ```
-cpumon 0.4.0
+cpumon 0.5.0
 ──────────────────────────────────────────────
 CPU       AMD Ryzen 7 7730U with Radeon Graphics
 Cores     16

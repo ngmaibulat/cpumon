@@ -4,6 +4,15 @@
   "workspaces": {
     "": {
       "name": "cpumon-monorepo",
+    },
+    "apps/etop-docs": {
+      "name": "etop-docs",
+      "devDependencies": {
+        "vitepress": "^1.6.4",
+      },
+    },
+    "apps/libsysmon-docs": {
+      "name": "libsysmon-docs",
       "devDependencies": {
         "vitepress": "^1.6.4",
       },
@@ -365,6 +374,8 @@
 
     "etop": ["etop@workspace:packages/etop"],
 
+    "etop-docs": ["etop-docs@workspace:apps/etop-docs"],
+
     "focus-trap": ["focus-trap@7.8.0", "", { "dependencies": { "tabbable": "^6.4.0" } }, "sha512-/yNdlIkpWbM0ptxno3ONTuf+2g318kh2ez3KSeZN5dZ8YC6AAmgeWz+GasYYiBJPFaYcSAPeu4GfhUaChzIJXA=="],
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
@@ -390,6 +401,8 @@
     "is-what": ["is-what@5.5.0", "", {}, "sha512-oG7cgbmg5kLYae2N5IVd3jm2s+vldjxJzK1pcu9LfpGuQ93MQSzo0okvRna+7y5ifrD+20FE8FvjusyGaz14fw=="],
 
     "libsysmon": ["libsysmon@workspace:packages/libsysmon"],
+
+    "libsysmon-docs": ["libsysmon-docs@workspace:apps/libsysmon-docs"],
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 

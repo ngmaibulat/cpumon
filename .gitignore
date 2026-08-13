@@ -93,8 +93,8 @@ dist
 .vuepress/dist
 
 # vitepress docs site - the bare `dist` entry above does not match these
-docs/.vitepress/cache
-docs/.vitepress/dist
+apps/*/.vitepress/cache
+apps/*/.vitepress/dist
 
 # Serverless directories
 .serverless/
