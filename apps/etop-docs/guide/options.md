@@ -1,5 +1,9 @@
 # Options
 
+```sh
+npx @aibulat/etop [options]
+```
+
 ```
   -i, --interval <ms>  sampling interval in milliseconds  (default: 1000)
       --mount <path>   filesystem the disk panel reports on
@@ -9,6 +13,12 @@
       --no-color       draw without colour
   -v, --version        print version and exit
   -h, --help           show this help and exit
+```
+
+So a half-second refresh with signals enabled is:
+
+```sh
+npx @aibulat/etop --interval 500 --allow-kill
 ```
 
 `--interval` can also be changed while running, with `+` and `-`.

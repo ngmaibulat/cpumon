@@ -28,7 +28,10 @@ etop 0.1.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
 q quit · ? help · Tab panel · Space pause · / filter
 ```
 
-## Install
+## Install (optional)
+
+`npx @aibulat/etop` needs no install. If you reach for it often enough to want a
+shorter command:
 
 ```sh
 npm install -g @aibulat/etop
@@ -54,6 +57,10 @@ has one runtime dependency, and `cpumon --json` pipes into `jq`.
 | `K` | send a signal — needs `--allow-kill` |
 
 ## Options
+
+```sh
+npx @aibulat/etop [options]
+```
 
 ```
   -i, --interval <ms>  sampling interval in milliseconds  (default: 1000)

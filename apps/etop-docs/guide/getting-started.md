@@ -9,7 +9,9 @@ cgroups.
 npx @aibulat/etop
 ```
 
-## Install
+## Install (optional)
+
+The `npx` line above needs no install. If you want a shorter command:
 
 ```sh
 npm install -g @aibulat/etop     # then just: etop
@@ -26,8 +28,11 @@ importing `SystemMonitor` should have to carry that weight.
 `etop` depends on `libsysmon`; nothing depends on the dashboard.
 
 If you want output you can pipe or script against rather than a screen to look
-at, use the `cpumon` CLI that `libsysmon` installs — `cpumon --json` is a stream
-of samples as NDJSON, and `cpumon --fetch` is a one-shot summary.
+at, use the `cpumon` CLI that `libsysmon` installs —
+`npx -p libsysmon cpumon --json` is a stream of samples as NDJSON, and
+`npx -p libsysmon cpumon --fetch` is a one-shot summary. (The package is
+`libsysmon` but the command is `cpumon`, so `npx cpumon` on its own does not
+reach it.)
 
 ## Where to go next
 

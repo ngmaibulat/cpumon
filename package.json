@@ -16,7 +16,7 @@
         "release:dry": "bun run scripts/release.ts --dry-run",
         "cpumon": "bun run --filter libsysmon build && node packages/libsysmon/bin/cpumon.js",
         "etop": "bun run --filter './packages/*' build && node packages/etop/dist/cli.js",
-        "docs:build": "bun run --filter ./apps/* build",
+        "docs:build": "bun run --filter './apps/*' build",
         "docs:libsysmon": "bun run --filter libsysmon-docs dev",
         "docs:etop": "bun run --filter etop-docs dev"
     },

@@ -8,13 +8,17 @@ This repository is a Bun workspace holding two published packages.
 | package | what it is | install |
 | --- | --- | --- |
 | [`libsysmon`](packages/libsysmon) | the library, and the `cpumon` CLI it ships. One runtime dependency (chalk), Node >= 18. | `bun add libsysmon` |
-| [`@aibulat/etop`](packages/etop) | the `etop` dashboard, built with Ink. Node >= 22. | `bun add -g @aibulat/etop` |
+| [`@aibulat/etop`](packages/etop) | the `etop` dashboard, built with Ink. Node >= 22. | `npx @aibulat/etop` |
 
 The package is `libsysmon`; the command it installs is still `cpumon`. That is
 deliberate — the library and the terminal command are named for what each of
 them is — but it does mean `npx cpumon` no longer reaches this project. Use
 `npx -p libsysmon cpumon`, or install it and just run `cpumon`. The dashboard is
-the same shape: the package is `@aibulat/etop`, the command it installs is `etop`.
+the same shape: the package is `@aibulat/etop`, the command it installs is
+`etop`. There the scope saves you — `npx @aibulat/etop` reaches the right package
+because the bin name matches the package's last path segment, so the docs use
+that form throughout, and bare `etop` is what you get after
+`npm install -g @aibulat/etop`.
 
 They are separate packages on purpose. `libsysmon` is something you depend on from
 code, so it stays small and its install cost stays boring. The dashboard is an
