@@ -64,12 +64,35 @@ for a short-lived OIDC claim, npm exchanges it for publish rights scoped to this
 repository and to `.github/workflows/publish.yml` by name, and npm attaches a
 provenance attestation to each tarball on the way out.
 
-To cut a release: bump the versions in `packages/*/package.json`, keeping
-`@aibulat/etop`'s `libsysmon` range in step with `libsysmon`'s new version, and
-merge that to `main`. Then run the **publish** workflow from the Actions tab —
-`dry_run` packs the tarballs and validates everything without touching the
-registry. It is a manual trigger on purpose: publishing is the one thing here that
-cannot be undone.
+To cut a release:
+
+```sh
+bun run bump                    # patch both packages
+bun run bump minor              # or minor, or major
+bun run bump patch libsysmon    # or one package, and whatever depends on it
+bun run bump --dry-run          # print the plan, write nothing
+
+git push --follow-tags
+```
+
+`scripts/bump.ts` does the part that is easy to get wrong by hand: it moves
+`@aibulat/etop`'s `libsysmon` range in step with `libsysmon`'s new version — and
+bumps `@aibulat/etop` too when it does, because a package whose dependency moved
+is a package whose contents changed, and leaving its version alone strands the
+change on a version nobody resolves to. Then it commits and tags each package
+`name@version`. It refuses to run on a dirty worktree, or when a tag it would
+create already exists, and it only rewrites manifests it can round-trip through
+`JSON.stringify` unchanged, so the diff is the version lines and nothing else.
+`--follow-tags` is not optional: a bare `git push` leaves the tags behind.
+
+Publishing then happens on its own. `publish.yml` runs when a commit touching
+`packages/*/package.json` lands on `main` — a version can only change in those
+files, and versions already on the registry are skipped, so a manifest edit that
+is not a bump costs a minute and publishes nothing. The workflow is still
+manually dispatchable from the Actions tab, which is where `dry_run` lives (it
+packs the tarballs and validates everything without touching the registry) and
+where you resume a release that died halfway from a commit that touches no
+manifest.
 
 `scripts/release.ts` is what actually runs, and most of it is refusal. It
 publishes in dependency order, and before anything reaches the registry it checks

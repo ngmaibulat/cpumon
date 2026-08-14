@@ -12,7 +12,8 @@
 
 import { $ } from 'bun';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+import { ROOT, publishOrder, readPackages } from './workspace.ts';
+
 const dryRun = process.argv.includes('--dry-run');
 
 // npm trusted publishing: GitHub Actions sets both of these, and only when the
@@ -25,60 +26,6 @@ const dryRun = process.argv.includes('--dry-run');
 const oidc = Boolean(
     process.env.ACTIONS_ID_TOKEN_REQUEST_URL && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN,
 );
-
-
-type Pkg = {
-    dir: string;
-    name: string;
-    version: string;
-    private?: boolean;
-    dependencies?: Record<string, string>;
-};
-
-
-async function readPackages(): Promise<Pkg[]>
-{
-    const { Glob } = await import('bun');
-    const found: Pkg[] = [];
-
-    for (const rel of new Glob('packages/*/package.json').scanSync({ cwd: ROOT })) {
-        const manifest = await Bun.file(`${ROOT}${rel}`).json();
-        found.push({ ...manifest, dir: `${ROOT}${rel.replace('/package.json', '')}` });
-    }
-
-    return found;
-}
-
-
-// Topological, not hardcoded: adding a third package should not quietly
-// reintroduce the ordering bug this exists to prevent.
-function publishOrder(pkgs: Pkg[]): Pkg[]
-{
-    const byName = new Map(pkgs.map((p) => [p.name, p]));
-    const ordered: Pkg[] = [];
-    const seen = new Set<string>();
-
-    function visit(pkg: Pkg, trail: string[])
-    {
-        if (seen.has(pkg.name)) return;
-
-        if (trail.includes(pkg.name)) {
-            throw new Error(`dependency cycle: ${[...trail, pkg.name].join(' -> ')}`);
-        }
-
-        for (const dep of Object.keys(pkg.dependencies ?? {})) {
-            const local = byName.get(dep);
-            if (local) visit(local, [...trail, pkg.name]);
-        }
-
-        seen.add(pkg.name);
-        ordered.push(pkg);
-    }
-
-    for (const pkg of pkgs) visit(pkg, []);
-
-    return ordered;
-}
 
 
 async function publishedVersions(name: string): Promise<Set<string>>
@@ -146,6 +93,14 @@ for (const pkg of order) {
         skip.add(pkg.name);
         console.log(`${pkg.name}@${pkg.version} is already published, will skip`);
     }
+}
+
+// Every version is already out. Since publish.yml runs on every push that touches
+// a manifest, this is the common case - and there is nothing left for the checks
+// below to protect, including the verify step, which is the expensive one.
+if (skip.size === order.length) {
+    console.log('\nnothing to publish');
+    process.exit(0);
 }
 
 // 3. the check that ordering alone cannot make: does each workspace dependency
@@ -220,7 +175,8 @@ else {
     }
 }
 
-// 5. everything the CI this repo does not have would otherwise catch
+// 5. the suite, again. ci.yml runs it on every push, but a release is the one
+//    place where "it passed on some earlier commit" is not good enough.
 if (!dryRun) {
     console.log('\nverifying...');
     for (const script of ['typecheck', 'test']) {

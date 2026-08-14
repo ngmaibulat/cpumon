@@ -10,6 +10,19 @@
 name: publish
 
 on:
+    # A version only ever changes in a manifest, so this fires exactly when there
+    # is something to release and stays quiet for every docs and source commit.
+    # That matters more than the wasted minute: the npm-publish environment can
+    # require a reviewer, and an unfiltered trigger would queue an approval on
+    # every push to main. release.ts skips versions already on the registry, so a
+    # manifest edit that is not a bump is a no-op either way.
+    push:
+        branches: [main]
+        paths:
+            - packages/*/package.json
+
+    # Still here, and still the way to run a dry run - or to resume a release that
+    # died halfway from a commit that touches no manifest.
     workflow_dispatch:
         inputs:
             dry_run:
@@ -60,6 +73,9 @@ jobs:
             # after its dirty-worktree check - which matters, because libsysmon's
             # test script rebuilds the committed bin/. Verifying in a step of its
             # own here would dirty the tree and make the release refuse.
+            #
+            # On a push there is no `inputs` context at all, so this resolves to
+            # `release` - a dry run is only ever something you ask for by hand.
             - name: Release
               run: bun run ${{ inputs.dry_run && 'release:dry' || 'release' }}
               env:
