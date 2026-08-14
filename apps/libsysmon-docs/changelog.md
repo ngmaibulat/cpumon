@@ -2,9 +2,9 @@
 
 ::: info Both packages were renamed before their first release under these names
 The library was published as `cpumon` up to 0.5.0 and is now `libsysmon`; the
-dashboard was developed as `cpumon-tui` and is now `etop`, with a site and a
-changelog of its own. The command this package installs is still `cpumon` —
-only the package name changed.
+dashboard was developed as `cpumon-tui` and is now `@aibulat/etop`, with a site
+and a changelog of its own. Both keep the commands they always installed,
+`cpumon` and `etop` — only the package names changed.
 
 Entries below 0.5.0 describe releases made under the old name and are left as
 they were written.

@@ -5,7 +5,7 @@ containers — built on [`libsysmon`](https://www.npmjs.com/package/libsysmon)'s
 collectors, drawn with [Ink](https://github.com/vadimdemedes/ink).
 
 ```sh
-npx etop
+npx @aibulat/etop
 ```
 
 ```
@@ -31,7 +31,7 @@ q quit · ? help · Tab panel · Space pause · / filter
 ## Install
 
 ```sh
-npm install -g etop
+npm install -g @aibulat/etop
 etop
 ```
 

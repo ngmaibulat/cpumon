@@ -6,13 +6,13 @@ per-interface network throughput, an interactive process table, and container
 cgroups.
 
 ```sh
-npx etop
+npx @aibulat/etop
 ```
 
 ## Install
 
 ```sh
-npm install -g etop     # then just: etop
+npm install -g @aibulat/etop     # then just: etop
 ```
 
 Node 22 or newer. `libsysmon` itself still supports Node 18.

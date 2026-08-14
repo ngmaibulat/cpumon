@@ -1,7 +1,7 @@
 {
     "name": "cpumon-monorepo",
     "private": true,
-    "description": "Workspace root for libsysmon and etop. Not published; see packages/",
+    "description": "Workspace root for libsysmon and @aibulat/etop. Not published; see packages/",
     "type": "module",
     "workspaces": [
         "apps/*",

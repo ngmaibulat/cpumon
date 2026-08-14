@@ -33,7 +33,7 @@ features:
   - title: Small
     details: One runtime dependency, ESM only, Node 18+.
   - title: Or a full-screen dashboard
-    details: npx etop draws per-core graphs, a memory breakdown, network throughput and a sortable, filterable process table. A separate package, so the library stays small.
+    details: npx @aibulat/etop draws per-core graphs, a memory breakdown, network throughput and a sortable, filterable process table. A separate package, so the library stays small.
 ---
 
 ```sh

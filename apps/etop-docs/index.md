@@ -28,7 +28,7 @@ features:
 ---
 
 ```sh
-npx etop
+npx @aibulat/etop
 ```
 
 Node 22 or newer. Built on [`libsysmon`](https://github.com/ngmaibulat/cpumon/tree/main/packages/libsysmon)'s

@@ -8,12 +8,13 @@ This repository is a Bun workspace holding two published packages.
 | package | what it is | install |
 | --- | --- | --- |
 | [`libsysmon`](packages/libsysmon) | the library, and the `cpumon` CLI it ships. One runtime dependency (chalk), Node >= 18. | `bun add libsysmon` |
-| [`etop`](packages/etop) | the `etop` dashboard, built with Ink. Node >= 22. | `bun add -g etop` |
+| [`@aibulat/etop`](packages/etop) | the `etop` dashboard, built with Ink. Node >= 22. | `bun add -g @aibulat/etop` |
 
 The package is `libsysmon`; the command it installs is still `cpumon`. That is
 deliberate — the library and the terminal command are named for what each of
 them is — but it does mean `npx cpumon` no longer reaches this project. Use
-`npx -p libsysmon cpumon`, or install it and just run `cpumon`.
+`npx -p libsysmon cpumon`, or install it and just run `cpumon`. The dashboard is
+the same shape: the package is `@aibulat/etop`, the command it installs is `etop`.
 
 They are separate packages on purpose. `libsysmon` is something you depend on from
 code, so it stays small and its install cost stays boring. The dashboard is an
@@ -34,7 +35,7 @@ bun run cpumon -- --fetch   # the CLI, rebuilt first
 bun run etop                # the dashboard, rebuilt first
 ```
 
-Per package: `bun run --filter libsysmon test`, `bun run --filter etop build`, and
+Per package: `bun run --filter libsysmon test`, `bun run --filter @aibulat/etop build`, and
 so on. The root scripts all fan out that way rather than calling `bun test` at
 the root, and that is deliberate: Bun runs a whole suite in one process, and
 `libsysmon`'s render tests set `chalk.level = 0`, which would strip the colour the

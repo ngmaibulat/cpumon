@@ -1,5 +1,5 @@
 {
-    "name": "etop",
+    "name": "@aibulat/etop",
     "version": "0.1.0",
     "description": "Full-screen terminal dashboard for libsysmon: CPU, memory, disk, network, processes and containers",
     "type": "module",
@@ -19,6 +19,9 @@
         "dist",
         "types"
     ],
+    "publishConfig": {
+        "access": "public"
+    },
     "engines": {
         "node": ">=22"
     },

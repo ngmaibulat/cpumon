@@ -6,13 +6,13 @@ processes and containers — from the terminal, as JSON, or from your own code.
 Requires Node 18 or newer. ESM only — use `import`, not `require`.
 
 > Looking for a full-screen dashboard rather than a stream of lines? That is
-> [`etop`](https://www.npmjs.com/package/etop) — per-core graphs, a
+> [`@aibulat/etop`](https://www.npmjs.com/package/@aibulat/etop) — per-core graphs, a
 > memory breakdown, network throughput and a sortable, filterable process
 > table, built on these same collectors. It is a separate package so that this
 > one stays small.
 >
 > ```sh
-> npx etop
+> npx @aibulat/etop
 > ```
 
 ## CLI

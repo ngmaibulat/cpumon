@@ -7,7 +7,7 @@ cycle.
 **→ [etop documentation](https://github.com/ngmaibulat/cpumon/tree/main/packages/etop)**
 
 ```sh
-npx etop
+npx @aibulat/etop
 ```
 
 Node 22 or newer. `libsysmon` itself still supports Node 18.
