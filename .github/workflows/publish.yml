@@ -1,0 +1,66 @@
+# Publishes libsysmon and @aibulat/etop to npm with trusted publishing - no token
+# anywhere, in this repo or on a laptop. npm exchanges the OIDC claim GitHub mints
+# for a credential that is scoped to this repository and this file, and lives for
+# the length of the publish.
+#
+# The filename is load-bearing. npm binds each package's trusted publisher to
+# `publish.yml` by name; renaming this file revokes publishing until the npm-side
+# config is updated to match.
+
+name: publish
+
+on:
+    workflow_dispatch:
+        inputs:
+            dry_run:
+                description: Pack and validate without publishing to npm
+                type: boolean
+                default: false
+
+# id-token: write is what mints the OIDC claim npm exchanges - without it the
+# claim is never issued and the publish falls back to looking for a token that
+# does not exist. contents: read because nothing here writes to the repo.
+permissions:
+    contents: read
+    id-token: write
+
+concurrency:
+    group: publish
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        # Must match the environment registered with npm character for character,
+        # or the claim does not validate and npm answers 401.
+        environment: npm-publish
+
+        steps:
+            - uses: actions/checkout@v5
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            # Deliberately no `registry-url:` - it writes an .npmrc containing
+            # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}, and an empty
+            # NODE_AUTH_TOKEN shadows the OIDC exchange with a blank credential.
+            - uses: actions/setup-node@v5
+              with:
+                  node-version: 24
+
+            # Trusted publishing landed in npm 11.5.1; the bundled npm is older.
+            - name: Install an npm that speaks OIDC
+              run: npm install -g npm@latest
+
+            - run: bun install --frozen-lockfile
+
+            # scripts/release.ts runs typecheck and test itself, and runs them
+            # after its dirty-worktree check - which matters, because libsysmon's
+            # test script rebuilds the committed bin/. Verifying in a step of its
+            # own here would dirty the tree and make the release refuse.
+            - name: Release
+              run: bun run ${{ inputs.dry_run && 'release:dry' || 'release' }}
+              env:
+                  NPM_CONFIG_PROVENANCE: true

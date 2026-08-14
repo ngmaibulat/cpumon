@@ -56,6 +56,38 @@ than an oversight — `bin/` mirrors `src/` one file at a time and its diffs are
 readable, while `dist/` is a bundle that churns entirely on any change. The
 dashboard builds from `prepack` instead.
 
+## Releasing
+
+Both packages publish from GitHub Actions with npm trusted publishing. There is no
+npm token — not in the repo's secrets, not on a laptop. The workflow asks GitHub
+for a short-lived OIDC claim, npm exchanges it for publish rights scoped to this
+repository and to `.github/workflows/publish.yml` by name, and npm attaches a
+provenance attestation to each tarball on the way out.
+
+To cut a release: bump the versions in `packages/*/package.json`, keeping
+`@aibulat/etop`'s `libsysmon` range in step with `libsysmon`'s new version, and
+merge that to `main`. Then run the **publish** workflow from the Actions tab —
+`dry_run` packs the tarballs and validates everything without touching the
+registry. It is a manual trigger on purpose: publishing is the one thing here that
+cannot be undone.
+
+`scripts/release.ts` is what actually runs, and most of it is refusal. It
+publishes in dependency order, and before anything reaches the registry it checks
+that the worktree is clean, that every workspace dependency range matches the
+version being published alongside it, and that `typecheck` and `test` pass.
+Versions already on the registry are skipped rather than failed, so re-running
+after a release that died halfway picks up where it stopped.
+
+The same script still works locally against a token — `bun run release` and
+`bun run release:dry`, both of which need one, because `bun publish` asks to be
+logged in even for a dry run. It notices the OIDC environment and switches from
+`bun publish` to `npm publish` only there, because Bun has no OIDC exchange.
+
+Two things live outside this repo and have to match it: the `npm-publish`
+environment in the repository's settings, and each package's trusted publisher on
+npmjs.com, which names `publish.yml` explicitly. Renaming that workflow file
+revokes publishing until npm is updated to match.
+
 ## Docs
 
 One VitePress site per package, under `apps/`. They are separate because the

@@ -13,7 +13,7 @@
         "./package.json": "./package.json"
     },
     "bin": {
-        "etop": "./dist/cli.js"
+        "etop": "dist/cli.js"
     },
     "files": [
         "dist",

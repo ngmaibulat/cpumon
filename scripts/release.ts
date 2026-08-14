@@ -15,6 +15,17 @@ import { $ } from 'bun';
 const ROOT = new URL('..', import.meta.url).pathname;
 const dryRun = process.argv.includes('--dry-run');
 
+// npm trusted publishing: GitHub Actions sets both of these, and only when the
+// job asked for `id-token: write`. Their presence is the whole signal - there is
+// no credential to look for, because npm mints a short-lived one from the OIDC
+// claim at publish time.
+//
+// bun publish cannot do that exchange (oven-sh/bun#22423), so this is also the
+// switch that decides which publisher runs below.
+const oidc = Boolean(
+    process.env.ACTIONS_ID_TOKEN_REQUEST_URL && process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN,
+);
+
 
 type Pkg = {
     dir: string;
@@ -113,7 +124,8 @@ async function npmToken(): Promise<string | undefined>
 const packages = (await readPackages()).filter((p) => !p.private);
 const order = publishOrder(packages);
 
-console.log(`release order: ${order.map((p) => `${p.name}@${p.version}`).join(' -> ')}\n`);
+console.log(`release order: ${order.map((p) => `${p.name}@${p.version}`).join(' -> ')}`);
+console.log(oidc ? 'auth: trusted publishing (npm, OIDC)\n' : 'auth: token (bun)\n');
 
 const problems: string[] = [];
 
@@ -168,20 +180,44 @@ for (const pkg of order) {
 // 4. the credential itself. bun publish only notices a missing token after it has
 //    packed the tarball, which on a multi-package release is late enough to stop
 //    halfway - the one state this script exists to avoid.
-const token = await npmToken();
 const willPublish = order.some((p) => !skip.has(p.name));
+let token: string | undefined;
 
-if (willPublish && !token) {
-    problems.push('no npm credentials: run `bunx npm login`, or set NPM_CONFIG_TOKEN');
+if (oidc) {
+    // Nothing to authenticate ahead of time: the exchange happens inside npm
+    // publish. What can be checked early is the npm doing it - an older npm has
+    // no exchange at all and fails with a bare 401 that names no cause.
+    // spawnSync throws rather than returning when the binary is not there at all
+    let npmVersion = '';
+    try {
+        npmVersion = Bun.spawnSync(['npm', '--version']).stdout.toString().trim();
+    }
+    catch { /* reported as "missing" below */ }
+
+    if (!Bun.semver.satisfies(npmVersion, '>=11.5.1')) {
+        problems.push(`trusted publishing needs npm >= 11.5.1, this one is ${npmVersion || 'missing'}`);
+    }
+    else console.log(`publishing with npm ${npmVersion}`);
 }
-else if (willPublish) {
-    const who = Bun.spawnSync(['bun', 'pm', 'whoami'], {
-        cwd: ROOT,
-        env: { ...process.env, NPM_CONFIG_TOKEN: token! },
-    });
+else {
+    token = await npmToken();
 
-    if (who.exitCode !== 0) problems.push(`npm rejected the token: ${who.stderr.toString().trim()}`);
-    else console.log(`authenticated as ${who.stdout.toString().trim()}`);
+    // Not gated on dryRun: `bun publish --dry-run` asks for a credential too, and
+    // only after it has packed every file. Failing here says the same thing three
+    // screens earlier. (`npm publish --dry-run` does not, which is why the OIDC
+    // branch above needs nothing.)
+    if (willPublish && !token) {
+        problems.push('no npm credentials: run `bunx npm login`, or set NPM_CONFIG_TOKEN');
+    }
+    else if (willPublish) {
+        const who = Bun.spawnSync(['bun', 'pm', 'whoami'], {
+            cwd: ROOT,
+            env: { ...process.env, NPM_CONFIG_TOKEN: token },
+        });
+
+        if (who.exitCode !== 0) problems.push(`npm rejected the token: ${who.stderr.toString().trim()}`);
+        else console.log(`authenticated as ${who.stdout.toString().trim()}`);
+    }
 }
 
 // 5. everything the CI this repo does not have would otherwise catch
@@ -206,13 +242,22 @@ for (const pkg of order) {
 
     console.log(`\npublishing ${pkg.name}@${pkg.version}`);
 
-    const args = ['publish', '--cwd', pkg.dir, ...(dryRun ? ['--dry-run'] : [])];
-    const proc = Bun.spawnSync(['bun', ...args], {
-        cwd: ROOT,
-        env: publishEnv,
-        stdout: 'inherit',
-        stderr: 'inherit',
-    });
+    // npm publish has no --cwd; it takes the package from the process cwd. Both
+    // packages declare prepack, and both prepack scripts shell out to bun, so bun
+    // has to be on PATH either way.
+    const proc = oidc
+        ? Bun.spawnSync(['npm', 'publish', ...(dryRun ? ['--dry-run'] : [])], {
+            cwd: pkg.dir,
+            env: process.env,
+            stdout: 'inherit',
+            stderr: 'inherit',
+        })
+        : Bun.spawnSync(['bun', 'publish', '--cwd', pkg.dir, ...(dryRun ? ['--dry-run'] : [])], {
+            cwd: ROOT,
+            env: publishEnv,
+            stdout: 'inherit',
+            stderr: 'inherit',
+        });
 
     if (proc.exitCode !== 0) {
         console.error(
