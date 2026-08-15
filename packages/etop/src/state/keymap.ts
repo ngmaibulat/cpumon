@@ -10,11 +10,14 @@
  * as a table of values, which is the highest-leverage decision in the
  * dashboard.
  *
- * Panel bindings are checked before global ones, and only when that panel has
- * focus. That is what lets the process table claim `g` for "first row" while
+ * Panel bindings are checked before global ones, and only when that panel is
+ * active. That is what lets the process table claim `g` for "first row" while
  * the global graph-style cycle lives on Ctrl-G.
+ *
+ * "Active" rather than "focused" is what makes screens cheap: see activePanel.
  */
 
+import { SCREEN_PANEL } from './types.js';
 import type { Action, PanelId, UiState } from './types.js';
 
 
@@ -44,12 +47,30 @@ export type Binding = {
     /** how the key is written in the help overlay */
     keys: string;
     description: string;
-    /** the panel this belongs to; absent means global */
-    panel?: PanelId;
+    /**
+     * The panel this belongs to, or the panels it is shared by; absent means
+     * global.
+     *
+     * A list is a list: moving the cursor down a table of processes and down a
+     * table of containers is one binding, not two that happen to agree. The
+     * alternative was a second copy per panel, which is the same mistake as a
+     * second key table - it survives exactly until someone changes one of them.
+     */
+    panel?: PanelId | PanelId[];
     match: (input: string, key: KeyState) => boolean;
     /** null means "matched, but there is nothing to do in this state" */
     action: (input: string, key: KeyState, state: UiState) => Action | null;
 };
+
+
+function binds(binding: Binding, panel: PanelId | null): boolean
+{
+    if (binding.panel === undefined || panel === null) {
+        return false;
+    }
+
+    return Array.isArray(binding.panel) ? binding.panel.includes(panel) : binding.panel === panel;
+}
 
 
 /**
@@ -102,18 +123,6 @@ export const GLOBAL_BINDINGS: Binding[] = [
         action: () => ({ type: 'escape' }),
     },
     {
-        keys: 'Tab  S-Tab',
-        description: 'focus the next or previous panel',
-        match: (_input, key) => key.tab === true,
-        action: (_i, key) => ({ type: 'focus-next', delta: key.shift === true ? -1 : 1 }),
-    },
-    {
-        keys: '1 … 6',
-        description: 'focus cpu, memory, disk, network, processes, containers',
-        match: (input, key) => plain(input, key, '1', '2', '3', '4', '5', '6'),
-        action: input => ({ type: 'focus', panel: PANEL_KEYS[Number(input) - 1] }),
-    },
-    {
         keys: 'Space',
         description: 'freeze the view; sampling continues underneath',
         match: char(' '),
@@ -127,9 +136,11 @@ export const GLOBAL_BINDINGS: Binding[] = [
     },
     {
         keys: 'f',
-        description: 'maximise the focused panel',
+        description: 'maximise the focused panel (dashboard only)',
         match: char('f'),
-        action: () => ({ type: 'toggle-maximise' }),
+        // every other screen is already one view filling the frame; there is
+        // nothing for this to do there and a message saying so would be noise
+        action: (_i, _k, state) => (state.screen === 'dash' ? { type: 'toggle-maximise' } : null),
     },
     {
         keys: 'r',
@@ -152,18 +163,58 @@ export const GLOBAL_BINDINGS: Binding[] = [
 ];
 
 
-export const PROCESS_BINDINGS: Binding[] = [
+/**
+ * Moving between screens, and between panels within the dashboard.
+ *
+ * Tab is the screen key because that is what a tab bar means to anyone who has
+ * used a browser, and because the screens are the axis worth walking blind -
+ * the panels are all visible at once on the dashboard and can be addressed
+ * directly by number. Panel cycling keeps a key of its own anyway, for the
+ * narrow terminals where computeLayout falls back to one panel at a time.
+ */
+export const SCREEN_BINDINGS: Binding[] = [
+    {
+        keys: 'Tab  S-Tab',
+        description: 'go to the next or previous screen',
+        match: (_input, key) => key.tab === true,
+        action: (_i, key) => ({ type: 'screen-next', delta: key.shift === true ? -1 : 1 }),
+    },
+    {
+        keys: '1 … 6',
+        description: 'focus cpu, memory, disk, network, processes, containers (dashboard only)',
+        match: (input, key) => plain(input, key, '1', '2', '3', '4', '5', '6'),
+        action: (input, _k, state) => (state.screen === 'dash'
+            ? { type: 'focus', panel: PANEL_KEYS[Number(input) - 1] }
+            : null),
+    },
+    {
+        keys: 'w  W',
+        description: 'focus the next or previous panel (dashboard only)',
+        match: char('w', 'W'),
+        action: (input, _k, state) => (state.screen === 'dash'
+            ? { type: 'focus-next', delta: input === 'w' ? 1 : -1 }
+            : null),
+    },
+];
+
+
+/** every panel that draws a scrollable table and therefore has a cursor */
+const LIST_PANELS: PanelId[] = ['process', 'container', 'connection', 'stack', 'unit'];
+
+
+/** moving a cursor down a table, wherever the table happens to be */
+export const LIST_BINDINGS: Binding[] = [
     {
         keys: 'j k  ↑ ↓',
         description: 'move the selection',
-        panel: 'process',
+        panel: LIST_PANELS,
         match: (input, key) => plain(input, key, 'j', 'k') || key.upArrow === true || key.downArrow === true,
         action: (input, key) => ({ type: 'move', delta: input === 'j' || key.downArrow === true ? 1 : -1 }),
     },
     {
         keys: 'C-d C-u  PgUp PgDn',
         description: 'page the selection',
-        panel: 'process',
+        panel: LIST_PANELS,
         match: (input, key) =>
             (key.ctrl === true && (input === 'd' || input === 'u'))
             || key.pageUp === true || key.pageDown === true,
@@ -172,13 +223,17 @@ export const PROCESS_BINDINGS: Binding[] = [
     {
         keys: 'g G  Home End',
         description: 'jump to the first or last row',
-        panel: 'process',
+        panel: LIST_PANELS,
         match: (input, key) => plain(input, key, 'g', 'G') || key.home === true || key.end === true,
         action: (input, key) => ({
             type: 'move-to',
             where: input === 'g' || key.home === true ? 'first' : 'last',
         }),
     },
+];
+
+
+export const PROCESS_BINDINGS: Binding[] = [
     {
         keys: 'c m p n s',
         description: 'sort by cpu, memory, pid, name, threads',
@@ -226,6 +281,31 @@ export const PROCESS_BINDINGS: Binding[] = [
 ];
 
 
+export const STACK_BINDINGS: Binding[] = [
+    {
+        keys: 'Enter',
+        description: 'collapse or expand the selected project',
+        panel: 'stack',
+        match: (_input, key) => key.return === true,
+        // the project name is filled in by App, which is the only place that
+        // knows which row the cursor has landed on - the same shape the kill
+        // modal uses to pin a pid
+        action: () => ({ type: 'toggle-collapse', project: '' }),
+    },
+];
+
+
+export const UNIT_BINDINGS: Binding[] = [
+    {
+        keys: 'a',
+        description: 'show every unit type, or just services, sockets and timers',
+        panel: 'unit',
+        match: char('a'),
+        action: () => ({ type: 'toggle-unit-types' }),
+    },
+];
+
+
 export const NETWORK_BINDINGS: Binding[] = [
     {
         keys: '← →',
@@ -247,9 +327,46 @@ export const NETWORK_BINDINGS: Binding[] = [
 export const DISK_BINDINGS: Binding[] = [];
 
 
-export const PANEL_BINDINGS: Binding[] = [...PROCESS_BINDINGS, ...NETWORK_BINDINGS, ...DISK_BINDINGS];
+/**
+ * Lists first.
+ *
+ * The shared cursor keys are checked before the panel-specific ones so that a
+ * panel cannot accidentally shadow `j` with something of its own without that
+ * showing up as a dead binding here, in one place, rather than as a key that
+ * works on one screen and not the next.
+ */
+export const PANEL_BINDINGS: Binding[] = [
+    ...LIST_BINDINGS,
+    ...PROCESS_BINDINGS,
+    ...STACK_BINDINGS,
+    ...UNIT_BINDINGS,
+    ...NETWORK_BINDINGS,
+    ...DISK_BINDINGS,
+];
 
-export const ALL_BINDINGS: Binding[] = [...GLOBAL_BINDINGS, ...PANEL_BINDINGS];
+export const ALL_BINDINGS: Binding[] = [...SCREEN_BINDINGS, ...GLOBAL_BINDINGS, ...PANEL_BINDINGS];
+
+/** everything resolve() falls through to once no panel binding matched */
+const FALLTHROUGH_BINDINGS: Binding[] = [...SCREEN_BINDINGS, ...GLOBAL_BINDINGS];
+
+
+/**
+ * Which panel's bindings are live.
+ *
+ * On the dashboard every panel is on screen at once, so the answer is whichever
+ * one has focus. On any other screen there is exactly one panel filling the
+ * frame, and it is the screen that says which - so the process table's `j`,
+ * `/`, `Enter` and `K` all work full-screen without a single duplicated
+ * binding, and `ui.focus` is left holding whatever the dashboard last set,
+ * untouched and waiting for the way back.
+ *
+ * null for a screen with no panel yet: nothing matches, and the key falls
+ * through to the globals rather than being swallowed.
+ */
+export function activePanel(state: UiState): PanelId | null
+{
+    return state.screen === 'dash' ? state.focus : SCREEN_PANEL[state.screen] ?? null;
+}
 
 
 /**
@@ -257,7 +374,7 @@ export const ALL_BINDINGS: Binding[] = [...GLOBAL_BINDINGS, ...PANEL_BINDINGS];
  *
  * The order is the contract. The filter bar swallows almost everything while
  * it is open - without that, typing "quit" into a filter would quit. Then the
- * focused panel's bindings, then the globals.
+ * active panel's bindings, then the screen and global ones.
  */
 export function resolve(input: string, key: KeyState, state: UiState): Action | null
 {
@@ -274,13 +391,15 @@ export function resolve(input: string, key: KeyState, state: UiState): Action | 
         return resolveOverlay(input, key, state);
     }
 
+    const panel = activePanel(state);
+
     for (const binding of PANEL_BINDINGS) {
-        if (binding.panel === state.focus && binding.match(input, key)) {
+        if (binds(binding, panel) && binding.match(input, key)) {
             return binding.action(input, key, state);
         }
     }
 
-    for (const binding of GLOBAL_BINDINGS) {
+    for (const binding of FALLTHROUGH_BINDINGS) {
         if (binding.match(input, key)) {
             return binding.action(input, key, state);
         }
@@ -347,8 +466,12 @@ function resolveOverlay(input: string, key: KeyState, state: UiState): Action | 
 export function helpSections(): { title: string; bindings: Binding[] }[]
 {
     return [
+        { title: 'Screens', bindings: SCREEN_BINDINGS },
         { title: 'Anywhere', bindings: GLOBAL_BINDINGS },
+        { title: 'Any list', bindings: LIST_BINDINGS },
         { title: 'Processes', bindings: PROCESS_BINDINGS },
+        { title: 'Stacks', bindings: STACK_BINDINGS },
+        { title: 'Units', bindings: UNIT_BINDINGS },
         { title: 'Network', bindings: NETWORK_BINDINGS },
     ].filter(section => section.bindings.length > 0);
 }

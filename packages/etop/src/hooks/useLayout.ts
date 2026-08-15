@@ -40,7 +40,29 @@ export type Layout = {
 
 
 export const MIN_COLUMNS = 40;
-export const MIN_ROWS = 10;
+
+/** the rows the frame spends on itself: header, tab bar, footer */
+export const CHROME_ROWS = 3;
+
+/**
+ * The smallest body computeLayout will arrange anything in.
+ *
+ * Body rows, not terminal rows - `rows` here has always been what is left after
+ * the header and the footer, and comparing it against the whole terminal's
+ * minimum meant a terminal at exactly the minimum got a 'too-small' layout with
+ * no panels in it, drawn inside a frame that had already decided it was big
+ * enough. Which showed up as a header, a footer, and nothing in between.
+ */
+const MIN_BODY_ROWS = 8;
+
+/**
+ * The smallest terminal the dashboard will draw in.
+ *
+ * Eleven rather than ten because the frame now spends three rows on itself
+ * rather than two, and eight is the least a bordered panel can show and still
+ * have an interior worth reading.
+ */
+export const MIN_ROWS = MIN_BODY_ROWS + CHROME_ROWS;
 
 /** below this a panel has no interior worth drawing */
 const MIN_PANEL_HEIGHT = 4;
@@ -127,7 +149,7 @@ export function computeLayout(
     const { present, absent } = presentPanels(snapshot);
     const note = absentNote(absent, snapshot);
 
-    if (columns < MIN_COLUMNS || rows < MIN_ROWS) {
+    if (columns < MIN_COLUMNS || rows < MIN_BODY_ROWS) {
         return { kind: 'too-small', rows: [], absent, note };
     }
 

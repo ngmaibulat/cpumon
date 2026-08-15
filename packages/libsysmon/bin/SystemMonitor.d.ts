@@ -23,8 +23,9 @@ import type { MemoryInfo } from './collectors/memory.js';
 import type { NetworkRates } from './collectors/network.js';
 import type { ProcessLoad, ProcessSortKey } from './collectors/process.js';
 import type { ContainerInfo } from './collectors/container.js';
+import type { Connection } from './collectors/connections.js';
 import type { CollectorOptions } from './collectors/proc.js';
-export type CollectorName = 'cpu' | 'memory' | 'load' | 'disk' | 'network' | 'process' | 'container';
+export type CollectorName = 'cpu' | 'memory' | 'load' | 'disk' | 'network' | 'process' | 'container' | 'connection';
 type ContainerList = {
     containers: ContainerInfo[];
     scope: 'host' | 'namespaced';
@@ -61,6 +62,9 @@ export type SystemSnapshot = {
         processes: ProcessLoad[];
     }>;
     containers?: Probe<ContainerList>;
+    connections?: Probe<{
+        connections: Connection[];
+    }>;
 };
 /**
  * A snapshot of everything that does not need a window.

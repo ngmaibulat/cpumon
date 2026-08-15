@@ -47,6 +47,38 @@ import {
   parseNetDev
 } from "./collectors/network.js";
 import {
+  IWD_SERVICE,
+  bitrateMbps,
+  centiDbm,
+  getWifi,
+  parseManagedObjects,
+  parseProcWireless
+} from "./collectors/wifi.js";
+import {
+  SYSTEMD_MANAGER,
+  SYSTEMD_PATH,
+  SYSTEMD_SERVICE,
+  getSystemdUnits,
+  parseListUnits,
+  unitType
+} from "./collectors/systemd.js";
+import {
+  DEFAULT_DOCKER_API,
+  DEFAULT_DOCKER_SOCKET,
+  composeOf,
+  getDockerContainers,
+  groupIntoStacks,
+  parseDockerContainers
+} from "./collectors/docker.js";
+import {
+  SOCKET_PROTOCOLS,
+  TCP_STATES,
+  decodeAddress,
+  getConnections,
+  parseNetSockets,
+  resolveOwners
+} from "./collectors/connections.js";
+import {
   attachRss,
   diffProcesses,
   getProcessCounters,
@@ -78,6 +110,7 @@ import {
 export {
   withLoadRatio,
   withCgroupLimit,
+  unitType,
   unavailable,
   topProcesses,
   toMemoryInfo,
@@ -89,6 +122,7 @@ export {
   shortId,
   selectProcesses,
   sampleSystem,
+  resolveOwners,
   readSelfLimits,
   readSelfCgroup,
   readMeminfo,
@@ -98,25 +132,35 @@ export {
   percent,
   parseStatTotal,
   parseSelfCgroup,
+  parseProcWireless,
   parsePidStatus,
   parsePidStat,
+  parseNetSockets,
   parseNetDev,
   parseMemoryMax,
   parseMeminfo,
+  parseManagedObjects,
+  parseListUnits,
+  parseDockerContainers,
   parseCpuMax,
   parseCgroupCpuStat,
   osMemoryInfo,
   listContainers,
   isAvailable,
+  groupIntoStacks,
   gib,
+  getWifi,
+  getSystemdUnits,
   getProcessCounters,
   getNetworkCounters,
   getMemoryInfo,
   getLoadAverage,
+  getDockerContainers,
   getDiskUsage,
   getCpuInfo,
   getCpuDiff,
   getContainerInfo,
+  getConnections,
   formatUptime,
   duration,
   diffProcesses,
@@ -125,9 +169,21 @@ export {
   detectContainer,
   detectCgroupVersion,
   defaultMount,
+  decodeAddress,
+  composeOf,
+  centiDbm,
   bytes,
+  bitrateMbps,
   attachRss,
   aggregateCpu,
+  TCP_STATES,
   SystemMonitor,
+  SYSTEMD_SERVICE,
+  SYSTEMD_PATH,
+  SYSTEMD_MANAGER,
+  SOCKET_PROTOCOLS,
+  IWD_SERVICE,
+  DEFAULT_DOCKER_SOCKET,
+  DEFAULT_DOCKER_API,
   CpuMonitor
 };

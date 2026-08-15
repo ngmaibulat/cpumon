@@ -25,6 +25,7 @@ export default defineConfig({
                     { text: 'Getting started', link: '/guide/getting-started' },
                     { text: 'Options', link: '/guide/options' },
                     { text: 'Keys', link: '/guide/keys' },
+                    { text: 'Screens', link: '/guide/screens' },
                     { text: 'Using the dashboard', link: '/guide/panels' },
                     { text: 'Terminals and platforms', link: '/guide/terminals' },
                 ],

@@ -115,6 +115,72 @@ export type {
 } from './collectors/network.js';
 
 export {
+    IWD_SERVICE,
+    bitrateMbps,
+    centiDbm,
+    getWifi,
+    parseManagedObjects,
+    parseProcWireless,
+} from './collectors/wifi.js';
+
+export type {
+    WifiConnection,
+    WifiDevice,
+    WifiNetwork,
+    WifiOptions,
+    WifiSource,
+    WifiState,
+} from './collectors/wifi.js';
+
+export {
+    SYSTEMD_MANAGER,
+    SYSTEMD_PATH,
+    SYSTEMD_SERVICE,
+    getSystemdUnits,
+    parseListUnits,
+    unitType,
+} from './collectors/systemd.js';
+
+export type {
+    SystemdOptions,
+    SystemdUnit,
+    UnitActiveState,
+} from './collectors/systemd.js';
+
+export {
+    DEFAULT_DOCKER_API,
+    DEFAULT_DOCKER_SOCKET,
+    composeOf,
+    getDockerContainers,
+    groupIntoStacks,
+    parseDockerContainers,
+} from './collectors/docker.js';
+
+export type {
+    ComposeMembership,
+    ComposeStack,
+    DockerContainer,
+    DockerOptions,
+    DockerPort,
+} from './collectors/docker.js';
+
+export {
+    SOCKET_PROTOCOLS,
+    TCP_STATES,
+    decodeAddress,
+    getConnections,
+    parseNetSockets,
+    resolveOwners,
+} from './collectors/connections.js';
+
+export type {
+    Connection,
+    SocketOwner,
+    SocketProtocol,
+    SocketState,
+} from './collectors/connections.js';
+
+export {
     attachRss,
     diffProcesses,
     getProcessCounters,

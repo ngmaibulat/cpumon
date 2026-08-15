@@ -20,7 +20,9 @@ export type FooterProps = {
 };
 
 
-const HINTS = ['q quit', '? help', 'Tab panel', 'Space pause', '/ filter'];
+// Tab is the tab bar's own key and is already named up there; what this row is
+// for is the keys with nothing on screen to suggest them
+const HINTS = ['q quit', '? help', 'w panel', 'Space pause', '/ filter'];
 
 const SHORT_HINTS = ['q quit', '? help'];
 

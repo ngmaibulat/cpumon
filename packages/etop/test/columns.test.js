@@ -95,7 +95,35 @@ test('a width below even one minimum clamps rather than showing nothing', () => 
     assert.deepEqual(fitted.columns.map(c => c.key), ['cpu']);
     assert.deepEqual(fitted.widths, [3]);
     assert.equal(fitted.dropped.length, COLUMNS.length - 1);
-    assert.equal([...row(['99.9'], fitted)].length, 3);
+
+    // cells are given in the original column order, so %CPU is still cells[1]
+    assert.equal([...row(['1', '99.9', '2', '3', 'node'], fitted)].length, 3);
+});
+
+
+test('a cell stays under its own header when a column is dropped', () => {
+    // the failure this guards against is invisible: every row is still exactly
+    // the panel's width and every cell still holds a plausible value for
+    // something, so the only symptom is a number under the wrong heading.
+    const fitted = fit(COLUMNS, 30);
+
+    assert.deepEqual(fitted.columns.map(c => c.key), ['pid', 'cpu', 'mem', 'comm']);
+    assert.deepEqual(fitted.indices, [0, 1, 2, 4], 'thr sat at index 3 and left');
+
+    const cells = ['4242', '99.9', '1.2 GiB', '17', 'node'];
+    const drawn = row(cells, fitted);
+
+    // THR was dropped, so its value must not appear at all - and COMMAND, which
+    // sat after it, must not have shifted into MEM's column
+    assert.ok(drawn.includes('1.2 GiB'), drawn);
+    assert.ok(drawn.includes('node'), drawn);
+    assert.ok(!drawn.includes('17'), `the dropped column's value leaked: ${drawn}`);
+
+    // and the header row, built over every column, lines up with it
+    const headers = row(COLUMNS.map(c => c.header), fitted);
+
+    assert.equal(headers.indexOf('MEM') + 'MEM'.length, drawn.indexOf('1.2 GiB') + '1.2 GiB'.length);
+    assert.equal(headers.indexOf('COMMAND'), drawn.indexOf('node'));
 });
 
 

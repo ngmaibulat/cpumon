@@ -13,16 +13,17 @@
  */
 
 import { Box, Text } from 'ink';
-import { memo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { bytes, shortId } from 'libsysmon/format';
 import { isAvailable } from 'libsysmon';
-import type { ContainerInfo } from 'libsysmon';
+import type { ContainerInfo, DockerContainer } from 'libsysmon';
 
 import { Loading } from '../ui/Loading.js';
 import { Panel } from '../ui/Panel.js';
 import { Table } from '../ui/Table.js';
 import { Unavailable } from '../ui/Unavailable.js';
 import { rampStep } from '../theme/ramp.js';
+import { useSlowState } from '../hooks/useSlow.js';
 import { useStoreState } from '../hooks/useStore.js';
 import { useStyle } from '../hooks/useTheme.js';
 import type { Column } from '../render/columns.js';
@@ -32,11 +33,24 @@ export type ContainerPanelProps = {
     width: number;
     height: number;
     focused?: boolean;
+    /** index into the container list */
+    selected?: number;
+    /** the first row to show; the reducer owns scrolling */
+    scroll?: number;
+    /**
+     * How many rows there are and how many fit, once both are known.
+     *
+     * Deliberately narrower than the process table's onView: that one also
+     * carries the selected row, because the kill modal reads it to pin a pid.
+     * Nothing here can be signalled, so nothing here needs to hand out a row.
+     */
+    onRows?: (rowCount: number, windowRows: number) => void;
 };
 
 
 const COLUMNS: Column[] = [
     { key: 'id', header: 'CONTAINER', align: 'left', min: 12, priority: 90 },
+    { key: 'image', header: 'IMAGE', align: 'left', min: 10, priority: 25 },
     { key: 'runtime', header: 'RUNTIME', align: 'left', min: 7, priority: 40 },
     { key: 'cpu', header: '%CPU', align: 'right', min: 5, priority: 100 },
     { key: 'cpus', header: 'CPUS', align: 'right', min: 4, priority: 30 },
@@ -45,10 +59,44 @@ const COLUMNS: Column[] = [
 ];
 
 
-export function toRow(container: ContainerInfo, unlimited = '∞'): string[]
+/**
+ * The docker id inside a cgroup directory name.
+ *
+ * `docker-<64hex>.scope` carries exactly the id the engine API returns, which
+ * is what makes the join a Map lookup rather than a heuristic. Anything else -
+ * an lxc payload, a podman scope, a bare cgroup - has no docker id in it and
+ * gets null rather than a guess.
+ */
+export function dockerIdOf(cgroupId: string): string | null
+{
+    return /^docker-([0-9a-f]{64})\.scope$/.exec(cgroupId)?.[1] ?? null;
+}
+
+
+/** index the engine's list by full id, for the join above */
+export function dockerIndex(containers: DockerContainer[]): Map<string, DockerContainer>
+{
+    return new Map(containers.map(container => [container.id, container]));
+}
+
+
+/**
+ * One row, optionally enriched with what docker knows.
+ *
+ * The cgroup collector stays the source of truth for every number here.
+ * Docker's own /containers/<id>/stats is a streaming endpoint with a different
+ * sampling model, and adopting it would put two incompatible definitions of
+ * "%CPU" on one screen. Docker supplies identity; cgroups supply figures.
+ *
+ * Where the join fails the existing columns stay exactly as they were - a
+ * podman or lxc container keeps its short id rather than going blank, because a
+ * blank cell reads as "this container has no name".
+ */
+export function toRow(container: ContainerInfo, unlimited = '∞', match?: DockerContainer): string[]
 {
     return [
-        shortId(container.id),
+        match?.name ?? shortId(container.id),
+        match?.image ?? '-',
         container.runtime,
         // undefined means "appeared during this window", which is not the same
         // claim as 0.0
@@ -79,12 +127,48 @@ export function pressure(container: ContainerInfo): number
 }
 
 
-export const ContainerPanel = memo(function ContainerPanel({ width, height, focused = false }: ContainerPanelProps)
+export const ContainerPanel = memo(function ContainerPanel({
+    width,
+    height,
+    focused = false,
+    selected,
+    scroll = 0,
+    onRows,
+}: ContainerPanelProps)
 {
     const { snapshot, ticks } = useStoreState();
+    const { docker } = useSlowState();
     const { theme, glyphs } = useStyle();
 
     const probe = snapshot?.containers;
+
+    // empty whenever the slow poller has not been asked for docker, or docker
+    // is not there: every row then falls back to its short id, which is what
+    // this panel showed before the join existed
+    const byId = useMemo(
+        () => (docker !== undefined && isAvailable(docker) ? dockerIndex(docker.containers) : new Map()),
+        [docker],
+    );
+
+    const containers = probe !== undefined && isAvailable(probe) ? probe.containers : [];
+    const namespaced = probe !== undefined && isAvailable(probe) && probe.scope === 'namespaced';
+
+    // Panel spends two rows on its border and one on its title; the table
+    // spends one more on its header, and the footnote takes a row when it
+    // applies. What is left is what a cursor can actually stand on.
+    const footnote = namespaced && height - 3 >= 3;
+    const bodyRows = Math.max(0, height - 4 - (footnote ? 1 : 0));
+
+    // selected and scroll are dependencies even though the report does not
+    // carry them. `G` sets the selection to an index no list could contain and
+    // leaves the reducer to clamp it, which it can only do once something tells
+    // it the row count - so the report has to fire on a cursor move too, not
+    // only when the list itself changes. clamp returns the state unchanged when
+    // there is nothing to fix, so the pass that follows a move settles at once
+    // rather than looping.
+    useEffect(() => {
+        onRows?.(containers.length, bodyRows);
+    }, [onRows, containers.length, bodyRows, selected, scroll]);
 
     return (
         <Panel
@@ -117,16 +201,17 @@ export const ContainerPanel = memo(function ContainerPanel({ width, height, focu
 
                 // the footnote is not optional when it applies, so it claims its
                 // row before the table gets one
-                const footnote = probe.scope === 'namespaced' && innerHeight >= 3;
                 const tableHeight = Math.max(1, innerHeight - (footnote ? 1 : 0));
 
                 return (
                     <Box flexDirection="column" width={inner} height={innerHeight} overflow="hidden">
                         <Table
                             columns={COLUMNS}
-                            rows={probe.containers.map(item => toRow(item, glyphs.unlimited))}
+                            rows={probe.containers.map(item => toRow(item, glyphs.unlimited, byId.get(dockerIdOf(item.id) ?? '')))}
                             width={inner}
                             height={tableHeight}
+                            selected={selected}
+                            offset={scroll}
                             rowColor={index => rampStep(theme.memory, pressure(probe.containers[index]))}
                         />
                         {footnote ? (

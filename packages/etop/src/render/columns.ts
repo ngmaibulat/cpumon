@@ -41,6 +41,17 @@ export type Fitted = {
     columns: Column[];
     /** width per surviving column, in the same order */
     widths: number[];
+    /**
+     * Where each surviving column sat in the array `fit` was given.
+     *
+     * This is what row() indexes a cell array by, and it is not bookkeeping.
+     * A panel builds its cells in the order it declared its columns, so once a
+     * column is dropped the two arrays no longer line up - and walking the
+     * cells positionally shows every value after the gap under the wrong
+     * header. That failure is invisible: the row is still the right width and
+     * every cell still holds a plausible value for something.
+     */
+    indices: number[];
     /** columns dropped for want of space, so the panel can say so */
     dropped: Column[];
 };
@@ -61,7 +72,7 @@ export const GAP = 1;
 export function fit(columns: Column[], available: number, rows: string[][] = []): Fitted
 {
     if (available < 1 || columns.length === 0) {
-        return { columns: [], widths: [], dropped: [...columns] };
+        return { columns: [], widths: [], indices: [], dropped: [...columns] };
     }
 
     // the natural width of each column: its header, or its widest cell
@@ -90,7 +101,7 @@ export function fit(columns: Column[], available: number, rows: string[][] = [])
     const budget = available - gaps;
 
     if (budget < 1) {
-        return { columns: [], widths: [], dropped: [...columns] };
+        return { columns: [], widths: [], indices: [], dropped: [...columns] };
     }
 
     const surviving = keep.map(index => columns[index]);
@@ -104,7 +115,7 @@ export function fit(columns: Column[], available: number, rows: string[][] = [])
     // for, and the width invariant has to hold either way or the short row
     // shifts every line drawn after it.
     if (minimum > budget) {
-        return { columns: surviving, widths: [budget], dropped: columns.filter(c => !surviving.includes(c)) };
+        return { columns: surviving, widths: [budget], indices: keep, dropped: columns.filter(c => !surviving.includes(c)) };
     }
 
     /**
@@ -151,6 +162,7 @@ export function fit(columns: Column[], available: number, rows: string[][] = [])
     return {
         columns: surviving,
         widths,
+        indices: keep,
         dropped: columns.filter(column => !surviving.includes(column)),
     };
 }
@@ -191,10 +203,17 @@ export function cell(text: string, width: number, align: 'left' | 'right', ellip
 }
 
 
-/** join fitted cells into one row of exactly the width `fit` was given */
+/**
+ * Join cells into one row of exactly the width `fit` was given.
+ *
+ * `cells` is indexed by the ORIGINAL column order - the order the panel
+ * declared and built its row in - not by which columns survived. Anything else
+ * silently shifts every value past a dropped column into its neighbour's
+ * header.
+ */
 export function row(cells: string[], fitted: Fitted, ellipsis = '…'): string
 {
     return fitted.columns
-        .map((column, i) => cell(cells[i] ?? '', fitted.widths[i], column.align, ellipsis))
+        .map((column, i) => cell(cells[fitted.indices[i]] ?? '', fitted.widths[i], column.align, ellipsis))
         .join(' '.repeat(GAP));
 }

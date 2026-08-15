@@ -14,10 +14,76 @@ import type { SignalName } from './signals.js';
 import type { GraphStyle, ThemeName } from '../../types/index.js';
 
 
-export type PanelId = 'cpu' | 'memory' | 'disk' | 'network' | 'process' | 'container';
+export type PanelId = 'cpu' | 'memory' | 'disk' | 'network' | 'process' | 'container' | 'connection' | 'stack' | 'unit' | 'wifi';
 
-/** the order Tab walks, and the order the number keys map to */
+/**
+ * The order `w` walks, and the order the number keys map to.
+ *
+ * Not every PanelId belongs here. This array is the *dashboard's* tile order,
+ * so a panel that exists only as a full-height screen - 'connection' is the
+ * first - is deliberately absent: adding it would put a connections tile on the
+ * dashboard and shift the number keys, neither of which is wanted. A screen
+ * registers itself in SCREEN_PANEL below, not here.
+ */
 export const PANEL_ORDER: PanelId[] = ['cpu', 'memory', 'disk', 'network', 'process', 'container'];
+
+
+/**
+ * A whole-frame view.
+ *
+ * The axis above panels. 'dash' is the tiled dashboard - every other screen is
+ * one list filling the frame, because a list is worthless in a four-row tile
+ * and useLayout already drops bands once rows/bands falls under four. Adding
+ * units, stacks, connections and wifi as panels would mostly have added things
+ * that get dropped.
+ */
+export type ScreenId = 'dash' | 'proc' | 'units' | 'containers' | 'stacks' | 'conn' | 'wifi';
+
+/** the order Tab walks, and the order the tab bar shows */
+export const SCREEN_ORDER: ScreenId[] = ['dash', 'proc', 'units', 'containers', 'stacks', 'conn', 'wifi'];
+
+/** short enough that all seven fit the minimum eighty-column terminal */
+export const SCREEN_LABELS: Record<ScreenId, string> = {
+    dash: 'dash',
+    proc: 'proc',
+    units: 'units',
+    containers: 'cont',
+    stacks: 'stacks',
+    conn: 'conn',
+    wifi: 'wifi',
+};
+
+/**
+ * Which panel a screen is showing, when it is showing one.
+ *
+ * This is what lets a full-screen view reuse a panel's bindings verbatim: the
+ * keymap resolves panel bindings against the *active* panel, which on 'dash' is
+ * whatever has focus and elsewhere is whatever the screen is about. Without it
+ * every process binding would need a duplicate entry for the proc screen, and a
+ * help overlay generated from two tables that agree by convention is exactly
+ * the thing this codebase refuses to have.
+ *
+ * The dashboard is absent on purpose - it has no single panel of its own - as
+ * are the screens whose collectors do not exist yet.
+ */
+export const SCREEN_PANEL: Partial<Record<ScreenId, PanelId>> = {
+    proc: 'process',
+    containers: 'container',
+    conn: 'connection',
+    stacks: 'stack',
+    units: 'unit',
+    // deliberately not in LIST_PANELS: the scan list has no cursor, because
+    // the only thing a cursor would be for is connecting, and that is an
+    // action this screen does not have. See plans/05-wifi-iwd.md.
+    wifi: 'wifi',
+};
+
+
+/** where the cursor was on a screen that is not currently showing */
+export type Cursor = {
+    selected: number;
+    scroll: number;
+};
 
 
 export type Overlay = 'none' | 'help' | 'kill';
@@ -31,6 +97,19 @@ export type KillTarget = {
 
 
 export type UiState = {
+    /** the whole-frame view; Tab walks these */
+    screen: ScreenId;
+    /**
+     * Where the cursor was on each screen that has been left.
+     *
+     * Selection itself stays a single flat `selected`/`scroll` pair, so no
+     * existing action has to learn what a screen is - only the switch saves the
+     * outgoing pair and restores the incoming one. Without this, tabbing past a
+     * screen with three rows clamps the cursor to two, and coming back to a
+     * four-thousand-row process list puts you at the top of it.
+     */
+    savedCursors: Partial<Record<ScreenId, Cursor>>;
+
     focus: PanelId;
     /** the focused panel fills the frame */
     maximised: boolean;
@@ -56,6 +135,24 @@ export type UiState = {
     filterBefore: string;
     /** the selected row's detail line is open */
     expanded: boolean;
+
+    /**
+     * Compose projects whose services are hidden, by project name.
+     *
+     * Collapsed rather than expanded, so the default - an empty object - shows
+     * everything. Keyed by name rather than by row index because the list is
+     * resampled every few seconds and a project appearing or leaving must not
+     * silently fold a different one.
+     */
+    collapsed: Record<string, true>;
+
+    /**
+     * The units screen is showing every unit type, not just the interesting few.
+     *
+     * Off by default because a real machine has 475 loaded units and 179 of them
+     * are .device and .mount entries nobody opened this screen to read.
+     */
+    allUnitTypes: boolean;
 
     /** network panel */
     interfaceIndex: number;
@@ -86,6 +183,8 @@ export type UiState = {
 
 export type Action =
     | { type: 'quit' }
+    | { type: 'screen'; screen: ScreenId }
+    | { type: 'screen-next'; delta: 1 | -1 }
     | { type: 'focus'; panel: PanelId }
     | { type: 'focus-next'; delta: 1 | -1 }
     | { type: 'toggle-maximise' }
@@ -106,6 +205,8 @@ export type Action =
     | { type: 'filter-commit' }
     | { type: 'filter-cancel' }
     | { type: 'toggle-expand' }
+    | { type: 'toggle-collapse'; project: string }
+    | { type: 'toggle-unit-types' }
     | { type: 'interface'; delta: 1 | -1 }
     | { type: 'toggle-bits' }
     | { type: 'escape' }
@@ -133,6 +234,8 @@ export const MAX_INTERVAL_MS = 10_000;
 export function initialUi(intervalMs: number, theme: ThemeName, graph: GraphStyle): UiState
 {
     return {
+        screen: 'dash',
+        savedCursors: {},
         focus: 'process',
         maximised: false,
         overlay: 'none',
@@ -148,6 +251,8 @@ export function initialUi(intervalMs: number, theme: ThemeName, graph: GraphStyl
         filtering: false,
         filterBefore: '',
         expanded: false,
+        collapsed: {},
+        allUnitTypes: false,
         interfaceIndex: 0,
         bits: false,
         mountIndex: 0,

@@ -13,11 +13,11 @@
  * can set an index no list could contain.
  */
 
-import { PANEL_ORDER } from './types.js';
+import { PANEL_ORDER, SCREEN_ORDER, SCREEN_PANEL } from './types.js';
 import { MAX_INTERVAL_MS, MIN_INTERVAL_MS } from './types.js';
 import { nextTheme } from '../theme/index.js';
 import { DEFAULT_SIGNAL, SIGNALS } from './signals.js';
-import type { Action, PanelId, UiState } from './types.js';
+import type { Action, PanelId, ScreenId, UiState } from './types.js';
 import type { GraphStyle } from '../../types/index.js';
 
 
@@ -30,6 +30,16 @@ const SORT_ORDER = ['pid', 'cpu', 'mem', 'threads', 'name'] as const;
 export function reduce(state: UiState, action: Action): UiState
 {
     switch (action.type) {
+        case 'screen':
+            return toScreen(state, action.screen);
+
+        case 'screen-next': {
+            const index = SCREEN_ORDER.indexOf(state.screen);
+            const next = SCREEN_ORDER[(index + action.delta + SCREEN_ORDER.length) % SCREEN_ORDER.length];
+
+            return toScreen(state, next);
+        }
+
         case 'focus':
             return { ...state, focus: action.panel, message: null };
 
@@ -136,7 +146,12 @@ export function reduce(state: UiState, action: Action): UiState
                 // remembered so Esc can put it back rather than clearing it,
                 // which would punish someone for looking at the bar
                 filterBefore: state.filter,
-                focus: 'process',
+                // the panel the filter belongs to, not always the process one.
+                // On the dashboard that is whatever has focus already, so this
+                // is only ever a change on a full-screen list - which is the
+                // case that was wrong: opening the filter on the units screen
+                // used to move the dashboard's focus to the process table.
+                focus: SCREEN_PANEL[state.screen] ?? state.focus,
                 message: null,
             };
 
@@ -155,6 +170,36 @@ export function reduce(state: UiState, action: Action): UiState
 
         case 'toggle-expand':
             return { ...state, expanded: !state.expanded };
+
+        case 'toggle-collapse': {
+            // an empty project is the panel saying the cursor is on no row it
+            // owns - nothing to fold, and folding "" would create a phantom key
+            if (action.project === '') {
+                return state;
+            }
+
+            const collapsed = { ...state.collapsed };
+
+            if (collapsed[action.project] === true) {
+                delete collapsed[action.project];
+            }
+            else {
+                collapsed[action.project] = true;
+            }
+
+            return { ...state, collapsed };
+        }
+
+        case 'toggle-unit-types':
+            return {
+                ...state,
+                allUnitTypes: !state.allUnitTypes,
+                // the list length changes under the cursor, so start from the
+                // top rather than leaving it somewhere arbitrary
+                selected: 0,
+                scroll: 0,
+                message: state.allUnitTypes ? 'showing service, socket and timer units' : 'showing all unit types',
+            };
 
         case 'interface':
             return { ...state, interfaceIndex: Math.max(0, state.interfaceIndex + action.delta) };
@@ -178,6 +223,15 @@ export function reduce(state: UiState, action: Action): UiState
 
             if (state.maximised) {
                 return { ...state, maximised: false };
+            }
+
+            // the last rung: a screen is the outermost thing you can be "in",
+            // so Esc backs all the way out to the dashboard rather than needing
+            // up to three Tab presses to walk there. toScreen clears the message
+            // on the way, which is what the final rung did before this one
+            // existed
+            if (state.screen !== 'dash') {
+                return toScreen(state, 'dash');
             }
 
             return { ...state, message: null };
@@ -213,6 +267,45 @@ export function reduce(state: UiState, action: Action): UiState
         case 'quit':
             return state;
     }
+}
+
+
+/**
+ * Move to another screen, taking the cursor with you and leaving one behind.
+ *
+ * The filter bar closes rather than following: it is a modal that owns the
+ * keyboard, and carrying it across a screen switch would mean the first
+ * keystroke on the new screen lands in a text box that is no longer visibly
+ * about anything. The committed filter itself is left alone, since only the
+ * process table reads it.
+ *
+ * Returning `state` unchanged for a same-screen switch keeps the identity
+ * stable, so a stray keypress does not invalidate every memo below App.
+ */
+function toScreen(state: UiState, screen: ScreenId): UiState
+{
+    if (screen === state.screen) {
+        return state;
+    }
+
+    const restored = state.savedCursors[screen] ?? { selected: 0, scroll: 0 };
+
+    return {
+        ...state,
+        screen,
+        savedCursors: {
+            ...state.savedCursors,
+            [state.screen]: { selected: state.selected, scroll: state.scroll },
+        },
+        selected: restored.selected,
+        scroll: restored.scroll,
+        // the detail line belongs to the row it was opened on, and that row is
+        // not on screen any more
+        expanded: false,
+        filtering: false,
+        filterBefore: '',
+        message: null,
+    };
 }
 
 

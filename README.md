@@ -126,6 +126,14 @@ Both are configured for `base: '/'`, i.e. each site owning its own domain. If
 they ever share a host, the second one needs a path prefix and every asset and
 internal link in it resolves against that prefix.
 
+## Plans
+
+[`plans/`](plans) holds design documents for work that spans more than one
+sitting — one numbered file per phase, in the order they should be built. They
+are for contributors rather than users: what is being built, what it is built
+on, and which of the obvious approaches were rejected and why. The user-facing
+account of what actually shipped is each package's changelog.
+
 ## Licence
 
 MIT.

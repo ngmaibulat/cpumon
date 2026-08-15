@@ -1,5 +1,9 @@
 # Using the dashboard
 
+The dashboard is one of etop's [screens](./screens) — the tiled one, and the one
+it opens on. Everything below applies to it and, where the same panel appears
+full-screen, to that too.
+
 ## Pausing
 
 `Space` freezes the **view**, not the sampling. The monitor keeps reading, so

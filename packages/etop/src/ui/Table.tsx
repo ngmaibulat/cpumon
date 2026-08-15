@@ -68,7 +68,9 @@ export const Table = memo(function Table({
         return <Text color={theme.muted} wrap="truncate-end">too narrow</Text>;
     }
 
-    const headers = fitted.columns.map(column => {
+    // built over every column, not just the survivors: row() indexes a cell
+    // array by original column position, and the header row is a cell array
+    const headers = columns.map(column => {
         if (column.key !== sortKey) {
             return column.header;
         }

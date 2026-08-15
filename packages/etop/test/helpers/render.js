@@ -12,7 +12,7 @@
 import React from 'react';
 import { renderToString } from 'ink';
 
-import { DEFAULT_THEME, MONO_THEME, StoreProvider, StyleProvider, glyphsFor } from '../../dist/internal.js';
+import { DEFAULT_THEME, MONO_THEME, SlowProvider, StoreProvider, StyleProvider, glyphsFor } from '../../dist/internal.js';
 
 
 export const h = React.createElement;
@@ -53,11 +53,40 @@ export function draw(node, options = {})
 
     const style = { theme, graph, unicode, continuousColor, glyphs: glyphsFor(unicode) };
 
-    const tree = options.store === undefined
+    const stored = options.store === undefined
         ? node
         : h(StoreProvider, { value: options.store }, node);
 
+    // the slow poller is optional in a way the store is not: a panel that never
+    // reads it renders identically without a provider, which is what keeps
+    // every pre-existing panel test unchanged
+    const tree = options.slow === undefined
+        ? stored
+        : h(SlowProvider, { value: options.slow }, stored);
+
     return renderToString(h(StyleProvider, { value: style }, tree), { columns });
+}
+
+
+/**
+ * A SlowPoller that only ever holds the state it was given.
+ *
+ * getSnapshot hands back one object by reference, for the reason fakeStore
+ * documents: useSyncExternalStore compares it by identity, and a fixture that
+ * rebuilt it per call would re-render forever and present as "Maximum update
+ * depth exceeded" from somewhere entirely unrelated.
+ */
+export function fakeSlow(state = {})
+{
+    const frozen = { ticks: 1, ...state };
+
+    return {
+        getSnapshot: () => frozen,
+        subscribe: () => () => {},
+        setActive: () => {},
+        dispose: () => {},
+        get active() { return []; },
+    };
 }
 
 

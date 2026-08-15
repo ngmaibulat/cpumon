@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ContainerPanel, Ring, pressure } from '../dist/internal.js';
+import { ContainerPanel, Ring, dockerIdOf, dockerIndex, pressure } from '../dist/internal.js';
 
-import { assertFits, draw, h, lines, plain } from './helpers/render.js';
+import { assertFits, draw, fakeSlow, h, lines, plain } from './helpers/render.js';
 import { fakeStore, snapshot } from './fixtures/snapshots.js';
 
 
@@ -203,4 +203,146 @@ test('an unlimited quota is still legible without the infinity sign', () => {
 
     // "-" would read as "unknown", which is a different claim
     assert.match(output, /none/);
+});
+
+
+test('the container list scrolls and reports its geometry', () => {
+    // the same contract the process table has: the panel is the only thing that
+    // knows how many rows there are and how many fit, so it tells the reducer
+    const many = Array.from({ length: 40 }, (_, i) => container({
+        id: `docker-${String(i).padStart(12, '0')}0000000000000000000000000000000000000000000000000000.scope`,
+        path: `/system.slice/docker-${i}.scope`,
+    }));
+
+    const store = fakeStore(Ring, { snapshot: withContainers(many) });
+
+    const reports = [];
+    const onRows = (rowCount, windowRows) => reports.push([rowCount, windowRows]);
+
+    const output = plain(draw(
+        h(ContainerPanel, { width: 70, height: 12, scroll: 30, selected: 33, onRows }),
+        { columns: 70, store },
+    ));
+
+    assert.deepEqual(reports.at(-1), [40, 8], 'twelve rows less border, title and header');
+
+    // scrolled past the first thirty, so row 0 is off screen and row 30 is on
+    assert.doesNotMatch(output, /000000000000/, 'the first container should have scrolled off');
+    assert.match(output, /000000000030/);
+});
+
+
+test('the container list draws no cursor when nothing selected it', () => {
+    // on the dashboard the panel is one tile among six and has no cursor of its
+    // own; the highlight belongs to the screen that gave it one
+    const store = fakeStore(Ring, { snapshot: withContainers([container()]) });
+
+    const output = draw(h(ContainerPanel, { width: 60, height: 8 }), { columns: 60, store });
+    const body = lines(output).slice(2).join('\n');
+
+    assert.doesNotMatch(body, /\[7m/, 'no row may be inverted without a selection');
+});
+
+
+test('the window the panel reports is the number of rows it actually drew', () => {
+    // this is the join between the reducer and the screen. If the report is one
+    // too many, `G` puts the cursor on a row below the last visible one and the
+    // list looks stuck; one too few and the last row is unreachable.
+    const many = Array.from({ length: 40 }, (_, i) => container({
+        id: `docker-${String(i).padStart(12, 'a')}0000000000000000000000000000000000000000000000000000.scope`,
+        path: `/system.slice/docker-${i}.scope`,
+    }));
+
+    const store = fakeStore(Ring, { snapshot: withContainers(many) });
+
+    for (const height of [8, 10, 12, 15, 20]) {
+        const reports = [];
+
+        const output = plain(draw(
+            h(ContainerPanel, {
+                width: 70,
+                height,
+                scroll: 0,
+                selected: 0,
+                onRows: (rowCount, windowRows) => reports.push([rowCount, windowRows]),
+            }),
+            { columns: 70, store },
+        ));
+
+        const drawn = lines(output).filter(line => /docker-?a/.test(line) || /\bdocker\b/.test(line)).length;
+
+        assert.deepEqual(reports.at(-1)?.[0], 40, `height ${height}: row count`);
+        assert.equal(reports.at(-1)?.[1], drawn, `height ${height}: reported window vs rows drawn`);
+    }
+});
+
+
+const HEX = 'a1b2c3d4e5f6' + '0'.repeat(52);
+
+
+test('a docker cgroup name carries the engine id; anything else carries none', () => {
+    assert.equal(dockerIdOf(`docker-${HEX}.scope`), HEX);
+
+    // an lxc payload, a podman scope and a bare cgroup have no docker id in
+    // them, and a guess here would attach the wrong name to a row
+    assert.equal(dockerIdOf('lxc.payload.super-hound'), null);
+    assert.equal(dockerIdOf(`libpod-${HEX}.scope`), null);
+    assert.equal(dockerIdOf('user.slice'), null);
+    assert.equal(dockerIdOf(`docker-${HEX}`), null, 'the .scope suffix is part of the shape');
+});
+
+
+test('the join replaces the hex id with the name docker knows', () => {
+    const dockerContainer = { id: HEX, name: 'default-lab-nginx-1', image: 'nginx:alpine' };
+
+    const output = plain(draw(
+        h(ContainerPanel, { width: 90, height: 8 }),
+        {
+            columns: 90,
+            store: fakeStore(Ring, { snapshot: withContainers([container({ id: `docker-${HEX}.scope` })]) }),
+            slow: fakeSlow({ docker: { available: true, containers: [dockerContainer] } }),
+        },
+    ));
+
+    assert.match(output, /default-lab-nginx-1/);
+    assert.match(output, /nginx:alpine/);
+    assert.doesNotMatch(output, /a1b2c3d4e5f6/, 'the short id gives way to the name');
+});
+
+
+test('a container docker does not know keeps its short id rather than going blank', () => {
+    // lxc, podman, or docker simply not running: a blank cell would read as
+    // "this container has no name"
+    const output = plain(draw(
+        h(ContainerPanel, { width: 90, height: 8 }),
+        {
+            columns: 90,
+            store: fakeStore(Ring, { snapshot: withContainers([container({ id: 'lxc.payload.super-hound', runtime: 'lxc' })]) }),
+            slow: fakeSlow({ docker: { available: true, containers: [] } }),
+        },
+    ));
+
+    assert.match(output, /lxc\.payload\.super-hound|super-hound/);
+    assert.match(output, /lxc/);
+});
+
+
+test('with no slow poller at all the panel is exactly what it was before the join', () => {
+    // every panel test above this line renders without a provider, and that has
+    // to keep meaning "show the short id"
+    const output = plain(draw(
+        h(ContainerPanel, { width: 90, height: 8 }),
+        { columns: 90, store: fakeStore(Ring, { snapshot: withContainers([container({ id: `docker-${HEX}.scope` })]) }) },
+    ));
+
+    assert.match(output, /a1b2c3d4e5f6/);
+});
+
+
+test('dockerIndex keys on the full id, which is what the cgroup name holds', () => {
+    const index = dockerIndex([{ id: HEX, name: 'x' }, { id: 'b'.repeat(64), name: 'y' }]);
+
+    assert.equal(index.size, 2);
+    assert.equal(index.get(HEX).name, 'x');
+    assert.equal(index.get('nope'), undefined);
 });

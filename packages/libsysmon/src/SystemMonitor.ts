@@ -32,12 +32,14 @@ import { diffProcesses, getProcessCounters, selectProcesses } from './collectors
 import type { ProcessLoad, ProcessSnapshot, ProcessSortKey } from './collectors/process.js';
 import { diffContainerCpu, listContainers } from './collectors/container.js';
 import type { ContainerInfo } from './collectors/container.js';
+import { getConnections } from './collectors/connections.js';
+import type { Connection } from './collectors/connections.js';
 import type { CollectorOptions } from './collectors/proc.js';
 
 
 export type CollectorName =
     | 'cpu' | 'memory' | 'load' | 'disk'
-    | 'network' | 'process' | 'container';
+    | 'network' | 'process' | 'container' | 'connection';
 
 
 type ContainerList = { containers: ContainerInfo[]; scope: 'host' | 'namespaced' };
@@ -73,6 +75,7 @@ export type SystemSnapshot = {
     network?: Probe<NetworkRates>;
     processes?: Probe<{ processes: ProcessLoad[] }>;
     containers?: Probe<ContainerList>;
+    connections?: Probe<{ connections: Connection[] }>;
 };
 
 
@@ -172,6 +175,14 @@ export function sampleSystem(options: Partial<SystemMonitorOptions> = {}): Syste
 
     if (collect.has('disk')) {
         snapshot.disk = getDiskUsage(options.mount);
+    }
+
+    // sockets are point-in-time with no window to diff, so this belongs here
+    // rather than in readBaseline(). Owners are deliberately not resolved: that
+    // scan costs a readdir per process and only a caller that knows which rows
+    // are visible can decide it is worth paying for.
+    if (collect.has('connection')) {
+        snapshot.connections = getConnections(options);
     }
 
     return snapshot;

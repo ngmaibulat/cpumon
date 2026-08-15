@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { computeLayout, isAbsent, presentPanels } from '../dist/internal.js';
+import {
+    CHROME_ROWS,
+    MIN_COLUMNS,
+    MIN_ROWS,
+    computeLayout,
+    isAbsent,
+    presentPanels,
+} from '../dist/internal.js';
 
 import { snapshot } from './fixtures/snapshots.js';
 
@@ -109,8 +116,12 @@ test('a linux machine with everything gets every panel', () => {
 });
 
 
-test('a terminal below the minimum says so and lays out nothing', () => {
-    for (const [columns, rows] of [[39, 24], [80, 9], [20, 5]]) {
+test('a body below the minimum says so and lays out nothing', () => {
+    // `rows` here is body rows - what is left after the header, the tab bar and
+    // the footer - not the whole terminal. Comparing it against the terminal's
+    // own minimum was what made a terminal at exactly the minimum draw a header,
+    // a footer and nothing between them.
+    for (const [columns, rows] of [[39, 24], [80, 7], [20, 5]]) {
         const layout = computeLayout(columns, rows, snapshot(), opts());
 
         assert.equal(layout.kind, 'too-small', `${columns}x${rows}`);
@@ -201,4 +212,34 @@ test('a short frame gives up whole panels, least valuable first', () => {
 
     assert.ok(tall.length >= short.length);
     assert.ok(short.includes('cpu'), 'cpu is the last thing to go');
+});
+
+
+test('a terminal at exactly the minimum still gets panels', () => {
+    // the regression this guards: MIN_ROWS is about the whole terminal and the
+    // `rows` argument is about the body, so a minimum-height terminal handed
+    // computeLayout a body it then rejected as too small - and the frame, which
+    // had already decided the terminal was big enough, drew nothing inside it
+    const layout = computeLayout(MIN_COLUMNS, MIN_ROWS - CHROME_ROWS, snapshot(), opts());
+
+    assert.notEqual(layout.kind, 'too-small');
+    assert.ok(layout.rows.length > 0, 'the minimum terminal must show at least one panel');
+});
+
+
+test('every panel a layout places fits inside the body it was given', () => {
+    for (let rows = MIN_ROWS - CHROME_ROWS; rows <= 60; rows += 7) {
+        for (const columns of [MIN_COLUMNS, 80, 120, 200]) {
+            const layout = computeLayout(columns, rows, snapshot(), opts());
+            const total = layout.rows.reduce((sum, band) => sum + (band[0]?.height ?? 0), 0);
+
+            assert.ok(total <= rows, `${columns}x${rows}: bands total ${total}`);
+
+            for (const band of layout.rows) {
+                const width = band.reduce((sum, rect) => sum + rect.width, 0);
+
+                assert.equal(width, columns, `${columns}x${rows}: a band must be exactly as wide as the frame`);
+            }
+        }
+    }
 });

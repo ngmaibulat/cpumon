@@ -1,0 +1,198 @@
+[
+  {
+    "Id": "59d1c149070f1c35e1217e34ce6e146364c05e67fe27e8b1dbf7a47933e97a6d",
+    "Names": [
+      "/default-lab-nginx-1"
+    ],
+    "Image": "nginx:alpine",
+    "Command": "/docker-entrypoint.sh sh /usr/local/bin/nginx-reload-watch.sh",
+    "Created": 1786706400,
+    "Ports": [
+      {
+        "IP": "0.0.0.0",
+        "PrivatePort": 80,
+        "PublicPort": 80,
+        "Type": "tcp"
+      },
+      {
+        "IP": "::",
+        "PrivatePort": 80,
+        "PublicPort": 80,
+        "Type": "tcp"
+      },
+      {
+        "IP": "0.0.0.0",
+        "PrivatePort": 443,
+        "PublicPort": 443,
+        "Type": "tcp"
+      },
+      {
+        "IP": "::",
+        "PrivatePort": 443,
+        "PublicPort": 443,
+        "Type": "tcp"
+      }
+    ],
+    "Labels": {
+      "com.docker.compose.config-hash": "074ba5f7a7c427a1fb8ee71d3a6c4b084bc596861a18118e934ba112961bdda6",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "app:service_started:false",
+      "com.docker.compose.image": "sha256:ea51152ef8c480b999cee0271a288c698704b18483276119b1253e576ef3232f",
+      "com.docker.compose.oneoff": "False",
+      "com.docker.compose.project": "default-lab",
+      "com.docker.compose.project.config_files": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default/docker-compose.yml",
+      "com.docker.compose.project.working_dir": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default",
+      "com.docker.compose.service": "nginx",
+      "com.docker.compose.version": "5.1.3",
+      "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>"
+    },
+    "State": "running",
+    "Status": "Up 19 hours"
+  },
+  {
+    "Id": "7dc7fe99a9de7090d5d4da0467311d0c968c2ffd11ef9041260b30891882540b",
+    "Names": [
+      "/default-lab-postgres-1"
+    ],
+    "Image": "postgres:18",
+    "Command": "docker-entrypoint.sh postgres",
+    "Created": 1786706400,
+    "Ports": [
+      {
+        "IP": "0.0.0.0",
+        "PrivatePort": 5432,
+        "PublicPort": 5432,
+        "Type": "tcp"
+      },
+      {
+        "IP": "::",
+        "PrivatePort": 5432,
+        "PublicPort": 5432,
+        "Type": "tcp"
+      }
+    ],
+    "Labels": {
+      "com.docker.compose.config-hash": "44ad7bb0512cd7e1745cbea1de44748dc834e0d09ae0dfb3c96449490b91279c",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "",
+      "com.docker.compose.image": "sha256:8b44b7198b7d27b9e882435752cc4996551a9c513b615fba0bca6d5c53b51a1f",
+      "com.docker.compose.oneoff": "False",
+      "com.docker.compose.project": "default-lab",
+      "com.docker.compose.project.config_files": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default/docker-compose.yml",
+      "com.docker.compose.project.working_dir": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default",
+      "com.docker.compose.service": "postgres",
+      "com.docker.compose.version": "5.1.3"
+    },
+    "State": "running",
+    "Status": "Up 19 hours (healthy)"
+  },
+  {
+    "Id": "5809f1ac2537b4efbb14f3d9d91fb9a9a68ecfc212aa3465c243044c58d35cff",
+    "Names": [
+      "/dev-webui"
+    ],
+    "Image": "ngmaibulat/mailgw-webui-fastify:latest",
+    "Command": "docker-entrypoint.sh npm run start",
+    "Created": 1785852581,
+    "Ports": [],
+    "Labels": {
+      "com.docker.compose.config-hash": "4b6b2e7e95b038a1d7867eaa542fac9d984cc1532cd8ee9f3fb267e1984847c5",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "mariadb:service_started:false,logservice:service_started:false",
+      "com.docker.compose.image": "sha256:89b77b9eeee42abd69b394411f52a3827cc2816a8a474fa5463271419945c775",
+      "com.docker.compose.oneoff": "False",
+      "com.docker.compose.project": "mailgw",
+      "com.docker.compose.service": "webui",
+      "com.docker.compose.version": "5.1.3"
+    },
+    "State": "exited",
+    "Status": "Exited (0) 4 days ago"
+  },
+  {
+    "Id": "1ac854d64e0f8ac5ab4a11f28b4d20518f282ba7788ea6abc86ba24617045828",
+    "Names": [
+      "/default-lab-redis-1"
+    ],
+    "Image": "redis:8-alpine",
+    "Command": "docker-entrypoint.sh redis-server --appendonly yes",
+    "Created": 1786706400,
+    "Ports": [
+      {
+        "IP": "",
+        "PrivatePort": 6379,
+        "Type": "tcp"
+      }
+    ],
+    "Labels": {
+      "com.docker.compose.config-hash": "1bf1d54a3f69c05cfd4e975916ffaae7e9eb1fd9503969d6acaa4d8693e4bf99",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "",
+      "com.docker.compose.image": "sha256:55563f45704d59e891b6aa643014bb6b562abf21909a44b3b297502415b68e29",
+      "com.docker.compose.oneoff": "False",
+      "com.docker.compose.project": "default-lab",
+      "com.docker.compose.service": "redis",
+      "com.docker.compose.version": "5.1.3"
+    },
+    "State": "running",
+    "Status": "Up 19 hours"
+  },
+  {
+    "Id": "f00ff00ff00f0000000000000000000000000000000000000000000000000000",
+    "Names": [
+      "/default-lab-postgres-run-abc123"
+    ],
+    "Image": "postgres:18",
+    "Command": "docker-entrypoint.sh postgres",
+    "Created": 1786706400,
+    "Ports": [
+      {
+        "IP": "0.0.0.0",
+        "PrivatePort": 5432,
+        "PublicPort": 5432,
+        "Type": "tcp"
+      },
+      {
+        "IP": "::",
+        "PrivatePort": 5432,
+        "PublicPort": 5432,
+        "Type": "tcp"
+      }
+    ],
+    "Labels": {
+      "com.docker.compose.config-hash": "44ad7bb0512cd7e1745cbea1de44748dc834e0d09ae0dfb3c96449490b91279c",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "",
+      "com.docker.compose.image": "sha256:8b44b7198b7d27b9e882435752cc4996551a9c513b615fba0bca6d5c53b51a1f",
+      "com.docker.compose.oneoff": "True",
+      "com.docker.compose.project": "default-lab",
+      "com.docker.compose.project.config_files": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default/docker-compose.yml",
+      "com.docker.compose.project.working_dir": "/home/admin/Downloads/2026-06-26/siem-tracker/containers/default",
+      "com.docker.compose.service": "postgres",
+      "com.docker.compose.version": "5.1.3"
+    },
+    "State": "running",
+    "Status": "Up 2 minutes"
+  },
+  {
+    "Id": "abcabcabcabc1111111111111111111111111111111111111111111111111111",
+    "Names": [
+      "/hand-started-redis"
+    ],
+    "Image": "redis:7-alpine",
+    "Command": "docker-entrypoint.sh redis-server",
+    "Created": 1786700000,
+    "Ports": [
+      {
+        "IP": "127.0.0.1",
+        "PrivatePort": 6379,
+        "PublicPort": 6379,
+        "Type": "tcp"
+      }
+    ],
+    "Labels": {
+      "maintainer": "nobody"
+    },
+    "State": "running",
+    "Status": "Up 6 days"
+  }
+]

@@ -1,0 +1,150 @@
+{
+  "objects": {
+    "/": {
+      "org.freedesktop.DBus.ObjectManager": {},
+      "net.connman.iwd.Daemon": {},
+      "net.connman.iwd.AgentManager": {}
+    },
+    "/net/connman/iwd/0": {
+      "net.connman.iwd.Adapter": {
+        "Powered": true,
+        "Model": "MT7921 802.11ax PCIe Wireless Network Adapter [Filogic 330]",
+        "Vendor": "MEDIATEK Corp.",
+        "Name": "phy0",
+        "SupportedModes": [
+          "station",
+          "ap"
+        ]
+      }
+    },
+    "/net/connman/iwd/0/6367": {
+      "net.connman.iwd.Device": {
+        "Name": "wlan0",
+        "Address": "aa:bb:cc:dd:ee:ff",
+        "Powered": true,
+        "Adapter": "/net/connman/iwd/0",
+        "Mode": "station"
+      },
+      "net.connman.iwd.Station": {
+        "ConnectedNetwork": "/net/connman/iwd/0/6367/484f4d454e45545f3547_psk",
+        "ConnectedAccessPoint": "/net/connman/iwd/0/6367/484f4d454e45545f3547_psk/001122334455",
+        "Scanning": false,
+        "State": "connected",
+        "Affinities": []
+      },
+      "net.connman.iwd.StationDiagnostic": {}
+    },
+    "/net/connman/iwd/0/6367/484f4d454e45545f3547_psk": {
+      "net.connman.iwd.Network": {
+        "Name": "HOMENET_5G",
+        "Connected": true,
+        "Device": "/net/connman/iwd/0/6367",
+        "Type": "psk",
+        "ExtendedServiceSet": [
+          "/net/connman/iwd/0/6367/484f4d454e45545f3547_psk/001122334455"
+        ],
+        "KnownNetwork": "/net/connman/iwd/484f4d454e45545f3547_psk"
+      }
+    },
+    "/net/connman/iwd/0/6367/484f4d454e4554_psk": {
+      "net.connman.iwd.Network": {
+        "Name": "HOMENET",
+        "Connected": false,
+        "Device": "/net/connman/iwd/0/6367",
+        "Type": "psk",
+        "ExtendedServiceSet": [
+          "/net/connman/iwd/0/6367/484f4d454e4554_psk/001122334455"
+        ],
+        "KnownNetwork": "/net/connman/iwd/484f4d454e4554_psk"
+      }
+    },
+    "/net/connman/iwd/0/6367/4e45494748424f55525f3247_psk": {
+      "net.connman.iwd.Network": {
+        "Name": "NEIGHBOUR_2G",
+        "Connected": false,
+        "Device": "/net/connman/iwd/0/6367",
+        "Type": "psk",
+        "ExtendedServiceSet": [
+          "/net/connman/iwd/0/6367/4e45494748424f55525f3247_psk/001122334455"
+        ]
+      }
+    },
+    "/net/connman/iwd/0/6367/47554553545f4f50454e_open": {
+      "net.connman.iwd.Network": {
+        "Name": "GUEST_OPEN",
+        "Connected": false,
+        "Device": "/net/connman/iwd/0/6367",
+        "Type": "open",
+        "ExtendedServiceSet": [
+          "/net/connman/iwd/0/6367/47554553545f4f50454e_open/001122334455"
+        ]
+      }
+    },
+    "/net/connman/iwd/0/6367/434f52505f4e4554_8021x": {
+      "net.connman.iwd.Network": {
+        "Name": "CORP_NET",
+        "Connected": false,
+        "Device": "/net/connman/iwd/0/6367",
+        "Type": "8021x",
+        "ExtendedServiceSet": [
+          "/net/connman/iwd/0/6367/434f52505f4e4554_8021x/001122334455"
+        ]
+      }
+    },
+    "/net/connman/iwd/484f4d454e45545f3547_psk": {
+      "net.connman.iwd.KnownNetwork": {
+        "Name": "HOMENET_5G",
+        "Type": "psk",
+        "Hidden": false,
+        "AutoConnect": true
+      }
+    },
+    "/net/connman/iwd/484f4d454e4554_psk": {
+      "net.connman.iwd.KnownNetwork": {
+        "Name": "HOMENET",
+        "Type": "psk",
+        "Hidden": false,
+        "AutoConnect": true
+      }
+    }
+  },
+  "ordered": [
+    [
+      "/net/connman/iwd/0/6367/484f4d454e45545f3547_psk",
+      -5600
+    ],
+    [
+      "/net/connman/iwd/0/6367/484f4d454e4554_psk",
+      -5800
+    ],
+    [
+      "/net/connman/iwd/0/6367/4e45494748424f55525f3247_psk",
+      -5900
+    ],
+    [
+      "/net/connman/iwd/0/6367/47554553545f4f50454e_open",
+      -6300
+    ],
+    [
+      "/net/connman/iwd/0/6367/56414e4953484544_psk",
+      -7100
+    ]
+  ],
+  "diagnostics": {
+    "ConnectedBss": "00:11:22:33:44:55",
+    "Frequency": 5560,
+    "Channel": 112,
+    "Security": "WPA2-Personal",
+    "PairwiseCipher": "CCMP-128",
+    "RSSI": -55,
+    "AverageRSSI": -54,
+    "RxMode": "802.11ax",
+    "RxMCS": 10,
+    "TxMode": "802.11ax",
+    "TxMCS": 7,
+    "TxBitrate": 7206,
+    "RxBitrate": 10206,
+    "InactiveTime": 14,
+    "ConnectedTime": 10754
+  }
+}

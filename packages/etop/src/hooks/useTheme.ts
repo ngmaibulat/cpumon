@@ -33,6 +33,8 @@ export type Glyphs = {
     sortDescending: string;
     sortAscending: string;
     pointer: string;
+    /** marks the network you are actually on */
+    check: string;
 };
 
 
@@ -45,6 +47,7 @@ const UNICODE_GLYPHS: Glyphs = {
     sortDescending: '▼',
     sortAscending: '▲',
     pointer: '▸',
+    check: '✓',
 };
 
 
@@ -59,6 +62,7 @@ const ASCII_GLYPHS: Glyphs = {
     sortDescending: 'v',
     sortAscending: '^',
     pointer: '>',
+    check: '*',
 };
 
 

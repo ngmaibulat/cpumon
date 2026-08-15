@@ -74,6 +74,18 @@ export type ProcessView = {
 const HEADROOM = 32;
 
 /**
+ * The granularity the request is rounded up to.
+ *
+ * Headroom alone was enough while the table only ever had one size. It is not
+ * enough now that Tab moves the same table between a ten-row tile on the
+ * dashboard and a forty-row full screen: that jump crosses the headroom every
+ * time, and every crossing respawns the monitor and throws away a sampling
+ * window. Rounding up to a bucket means both sizes usually ask for the same
+ * number and the switch costs nothing.
+ */
+const BUCKET = 32;
+
+/**
  * Rows collected while a filter is active.
  *
  * The filter narrows what has already been sampled, and what has been sampled
@@ -155,7 +167,7 @@ export const ProcessPanel = memo(function ProcessPanel({
     // ask for more than is visible so scrolling never restarts the monitor,
     // and for everything while a filter is narrowing the list
     useEffect(() => {
-        store.setTop(filter === '' ? bodyRows + HEADROOM : FILTER_TOP);
+        store.setTop(filter === '' ? Math.ceil((bodyRows + HEADROOM) / BUCKET) * BUCKET : FILTER_TOP);
     }, [store, bodyRows, filter]);
 
     useEffect(() => {

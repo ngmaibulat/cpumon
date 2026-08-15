@@ -11,7 +11,9 @@ import { createElement } from 'react';
 
 import { App } from './app.js';
 import { getVersion } from './cli-args.js';
+import { SlowProvider } from './hooks/useSlow.js';
 import { StoreProvider } from './hooks/useStore.js';
+import { SlowPoller } from './state/slow.js';
 import { SnapshotStore } from './state/store.js';
 import { detectCapabilities } from './term/capabilities.js';
 import { installLifecycle } from './term/lifecycle.js';
@@ -25,7 +27,7 @@ export type { GraphStyle, ThemeName, TuiOptions } from '../types/index.js';
  * per-panel collector set to narrow this down to - and a probe that comes back
  * unavailable costs one failed open(), not a scan.
  */
-const COLLECTORS = ['cpu', 'memory', 'load', 'disk', 'network', 'process', 'container'] as const;
+const COLLECTORS = ['cpu', 'memory', 'load', 'disk', 'network', 'process', 'container', 'connection'] as const;
 
 /**
  * Process rows to collect before anything has measured the terminal.
@@ -58,16 +60,21 @@ export async function runTui(options: TuiOptions = {}): Promise<number>
         sortReverse: false,
     });
 
+    // constructed here for the same reasons the store is, and idle until a
+    // screen asks it for something: nothing polls a socket on the dashboard
+    const slow = new SlowPoller({});
+
     const instance = render(
-        createElement(StoreProvider, { value: store },
-            createElement(App, {
-                capabilities,
-                version: getVersion(),
-                allowKill: options.allowKill === true,
-                theme: options.theme ?? 'auto',
-                graph: options.graph ?? 'auto',
-                intervalMs: options.intervalMs ?? 1000,
-            })),
+        createElement(SlowProvider, { value: slow },
+            createElement(StoreProvider, { value: store },
+                createElement(App, {
+                    capabilities,
+                    version: getVersion(),
+                    allowKill: options.allowKill === true,
+                    theme: options.theme ?? 'auto',
+                    graph: options.graph ?? 'auto',
+                    intervalMs: options.intervalMs ?? 1000,
+                }))),
         {
             // ink enters and leaves the alternate screen itself, including on
             // unmount. Hand-rolling it means racing ink's own final frame,
@@ -85,7 +92,10 @@ export async function runTui(options: TuiOptions = {}): Promise<number>
             incrementalRendering: true,
         });
 
-    const lifecycle = installLifecycle(instance, () => store.dispose());
+    const lifecycle = installLifecycle(instance, () => {
+        store.dispose();
+        slow.dispose();
+    });
 
     try {
         await instance.waitUntilExit();
@@ -94,6 +104,7 @@ export async function runTui(options: TuiOptions = {}): Promise<number>
         // the normal quit path: the signal handlers never fired, so nothing has
         // stopped the monitor yet
         store.dispose();
+        slow.dispose();
         lifecycle.dispose();
     }
 

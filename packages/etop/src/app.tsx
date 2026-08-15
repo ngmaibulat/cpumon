@@ -14,8 +14,9 @@
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
-import { computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
+import { CHROME_ROWS, computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
 import { useStore, useStoreState } from './hooks/useStore.js';
+import { useSlow } from './hooks/useSlow.js';
 import { StyleProvider, glyphsFor } from './hooks/useTheme.js';
 import { resolve } from './state/keymap.js';
 import { reduce } from './state/reducer.js';
@@ -27,15 +28,22 @@ import { Footer } from './panels/Footer.js';
 import { Header } from './panels/Header.js';
 import { HelpOverlay } from './panels/HelpOverlay.js';
 import { ContainerPanel } from './panels/ContainerPanel.js';
+import { ConnectionPanel } from './panels/ConnectionPanel.js';
+import { StackPanel } from './panels/StackPanel.js';
+import { UnitPanel } from './panels/UnitPanel.js';
+import { WifiPanel } from './panels/WifiPanel.js';
 import { KillModal } from './panels/KillModal.js';
 import { MemoryPanel } from './panels/MemoryPanel.js';
 import { NetworkPanel } from './panels/NetworkPanel.js';
 import { ProcessPanel } from './panels/ProcessPanel.js';
+import { TabBar } from './panels/TabBar.js';
 import { FilterInput } from './ui/FilterInput.js';
 import { sendSignal } from './state/signals.js';
 import { resolveGraphStyle } from './term/capabilities.js';
 import type { Capabilities } from './term/capabilities.js';
-import type { PanelId, UiState } from './state/types.js';
+import type { Layout } from './hooks/useLayout.js';
+import type { PanelId, ScreenId, UiState } from './state/types.js';
+import type { SlowSource } from './state/slow.js';
 import type { ProcessView } from './panels/ProcessPanel.js';
 import type { Killer } from './state/signals.js';
 
@@ -79,6 +87,41 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
         dispatch({ type: 'clamp', rowCount: next.rowCount, windowRows: next.windowRows });
     }, []);
 
+    /**
+     * The same report from a list that is not the process table.
+     *
+     * Narrower on purpose: `view.current` is what the kill modal reads to
+     * decide which pid it is about to signal, so only the process table gets to
+     * write it. Every other scrollable screen reports its geometry and nothing
+     * else.
+     */
+    const onRows = useCallback((rowCount: number, windowRows: number) => {
+        dispatch({ type: 'clamp', rowCount, windowRows });
+    }, []);
+
+    // which compose project the cursor is on, held in a ref for the same reason
+    // `view` is: Enter reads it once, and re-rendering on every cursor move
+    // would defeat the memo on the panel it came from
+    const project = useRef<string | null>(null);
+
+    const onProject = useCallback((next: string | null) => {
+        project.current = next;
+    }, []);
+
+    const slow = useSlow();
+
+    /**
+     * Tell the slow poller what this screen needs.
+     *
+     * The union is exactly what is visible, so leaving the stacks screen stops
+     * the docker traffic and a session that never visits it never opens the
+     * socket. setActive is idempotent, which is what makes running this on
+     * every screen change safe.
+     */
+    useEffect(() => {
+        slow?.setActive(SOURCES_FOR[ui.screen] ?? []);
+    }, [slow, ui.screen]);
+
     useInput((input, key) => {
         if (ui.overlay === 'kill') {
             handleKillKeys(input, key);
@@ -110,6 +153,14 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
                     ? null
                     : { pid: row.pid, comm: row.comm, threads: row.threads },
             });
+
+            return;
+        }
+
+        // the binding says "fold the selected project"; only the panel knows
+        // which row the cursor is on, so the name is filled in here
+        if (action.type === 'toggle-collapse') {
+            dispatch({ type: 'toggle-collapse', project: project.current ?? '' });
 
             return;
         }
@@ -206,9 +257,14 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
         };
     }, [ui.theme, ui.graph, capabilities]);
 
+    // header, tab bar, footer. Every consumer of the body height below has to
+    // use this one figure: a frame one line taller than the terminal scrolls
+    // the alternate screen, and that damage does not wash out on the next frame
+    const body = rows - CHROME_ROWS;
+
     const layout = useMemo(
-        () => computeLayout(columns, rows - 2, state.snapshot, { focus: ui.focus, maximised: ui.maximised }),
-        [columns, rows, state.snapshot, ui.focus, ui.maximised],
+        () => computeLayout(columns, body, state.snapshot, { focus: ui.focus, maximised: ui.maximised }),
+        [columns, body, state.snapshot, ui.focus, ui.maximised],
     );
 
     if (columns < MIN_COLUMNS || rows < MIN_ROWS) {
@@ -223,37 +279,31 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
         <StyleProvider value={style}>
             <Box flexDirection="column" width={columns} height={rows} overflow="hidden">
                 <Header width={columns} version={version} intervalMs={state.intervalMs} paused={ui.paused} />
+                <TabBar width={columns} screen={ui.screen} />
                 <Box flexGrow={1} flexDirection="column" overflow="hidden">
                     {ui.overlay === 'help'
-                        ? <HelpOverlay width={columns} height={rows - 2} />
+                        ? <HelpOverlay width={columns} height={body} />
                         : ui.overlay === 'kill'
                         ? (
                             <KillModal
                                 width={columns}
-                                height={rows - 2}
+                                height={body}
                                 target={ui.killTarget}
                                 signal={ui.signal}
                                 allowed={allowKill}
                             />
                         )
-                        : layout.rows.map((band, i) => (
-                            // the band carries the height its panels agreed on,
-                            // so a panel that renders short cannot let the next
-                            // band ride up into its space
-                            <Box key={i} height={band[0]?.height ?? 0} overflow="hidden">
-                                {band.map(rect => (
-                                    <PanelFor
-                                        key={rect.panel}
-                                        panel={rect.panel}
-                                        width={rect.width}
-                                        height={rect.height}
-                                        focused={rect.panel === ui.focus}
-                                        ui={ui}
-                                        onView={onView}
-                                    />
-                                ))}
-                            </Box>
-                        ))}
+                        : (
+                            <ScreenFor
+                                width={columns}
+                                height={body}
+                                layout={layout}
+                                ui={ui}
+                                onView={onView}
+                                onRows={onRows}
+                                onProject={onProject}
+                            />
+                        )}
                 </Box>
                 {ui.filtering
                     // the bar replaces the footer rather than adding a row: a
@@ -264,6 +314,154 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
             </Box>
         </StyleProvider>
     );
+}
+
+
+/**
+ * What each screen needs from the slow poller.
+ *
+ * A screen that is not listed asks for nothing, and the poller then opens no
+ * socket at all - which is the whole point of setActive. `containers` is here
+ * as well as `stacks` because the container table now joins the cgroup figures
+ * against docker's names.
+ */
+const SOURCES_FOR: Partial<Record<ScreenId, SlowSource[]>> = {
+    stacks: ['docker'],
+    containers: ['docker'],
+    units: ['units'],
+    wifi: ['wifi'],
+};
+
+
+type ScreenForProps = {
+    width: number;
+    height: number;
+    layout: Layout;
+    ui: UiState;
+    onView: (view: ProcessView) => void;
+    onRows: (rowCount: number, windowRows: number) => void;
+    onProject: (project: string | null) => void;
+};
+
+
+/**
+ * What fills the frame.
+ *
+ * The dashboard is the tiled arrangement it always was. Every other screen is
+ * one panel handed the whole body rect - which is why adding screens needed no
+ * new panel code: ProcessPanel and ContainerPanel already take a width and a
+ * height and render inside Panel, and "full screen" is just a bigger rect.
+ */
+function ScreenFor({ width, height, layout, ui, onView, onRows, onProject }: ScreenForProps)
+{
+    switch (ui.screen) {
+        case 'dash':
+            return (
+                <>
+                    {layout.rows.map((band, i) => (
+                        // the band carries the height its panels agreed on, so
+                        // a panel that renders short cannot let the next band
+                        // ride up into its space
+                        <Box key={i} height={band[0]?.height ?? 0} overflow="hidden">
+                            {band.map(rect => (
+                                <PanelFor
+                                    key={rect.panel}
+                                    panel={rect.panel}
+                                    width={rect.width}
+                                    height={rect.height}
+                                    focused={rect.panel === ui.focus}
+                                    ui={ui}
+                                    onView={onView}
+                                />
+                            ))}
+                        </Box>
+                    ))}
+                </>
+            );
+
+        case 'proc':
+            return (
+                <ProcessPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    sort={ui.sort}
+                    sortReverse={ui.sortReverse}
+                    filter={ui.filter}
+                    expanded={ui.expanded}
+                    onView={onView}
+                />
+            );
+
+        case 'containers':
+            return (
+                <ContainerPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    onRows={onRows}
+                />
+            );
+
+        case 'conn':
+            return (
+                <ConnectionPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    onRows={onRows}
+                />
+            );
+
+        case 'wifi':
+            return <WifiPanel width={width} height={height} focused />;
+
+        case 'units':
+            return (
+                <UnitPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    allTypes={ui.allUnitTypes}
+                    filter={ui.filter}
+                    onRows={onRows}
+                />
+            );
+
+        case 'stacks':
+            return (
+                <StackPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    collapsed={ui.collapsed}
+                    onRows={onRows}
+                    onProject={onProject}
+                />
+            );
+
+        default: {
+            // Every ScreenId now has a case above, and this is the compiler's
+            // proof of it: adding a screen without a panel is a type error here
+            // rather than a blank frame at runtime. It replaces Placeholder,
+            // which existed only while some screens had no collector.
+            const unreachable: never = ui.screen;
+
+            void unreachable;
+
+            return null;
+        }
+    }
 }
 
 

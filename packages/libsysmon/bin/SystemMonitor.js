@@ -7,6 +7,7 @@ import { getMemoryInfo } from "./collectors/memory.js";
 import { diffNetwork, getNetworkCounters } from "./collectors/network.js";
 import { diffProcesses, getProcessCounters, selectProcesses } from "./collectors/process.js";
 import { diffContainerCpu, listContainers } from "./collectors/container.js";
+import { getConnections } from "./collectors/connections.js";
 var DEFAULT_COLLECTORS = ["cpu", "memory", "load"];
 function readBaseline(collect, options) {
   return {
@@ -50,6 +51,9 @@ function sampleSystem(options = {}) {
   }
   if (collect.has("disk")) {
     snapshot.disk = getDiskUsage(options.mount);
+  }
+  if (collect.has("connection")) {
+    snapshot.connections = getConnections(options);
   }
   return snapshot;
 }

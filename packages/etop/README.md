@@ -9,7 +9,8 @@ npx @aibulat/etop
 ```
 
 ```
-etop 0.1.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
+etop 0.6.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
+ dash   proc  units  cont  stacks  conn  wifi          Tab ▸ screen
 ╭────────────────────────────────────╮╭────────────────────────────────────╮
 │CPU 16C                          21%││MEM                              66%│
 │                    ▄▆▅▄▄▄▄▃▂▁▄▃▄▄▆▅││MEM  [███████▍   ] 14.7 / 22.3 GiB  │
@@ -25,7 +26,7 @@ etop 0.1.0 · srv-01 · Linux 6.18.32 · up 5d 18h · 1.0s
 │    PID %CPU▼       MEM THR S COMMAND│CONTAINER    RUNTIME %CPU   MEM LIMIT│
 │2119963  56.5 475.5 MiB  38 S chromiu│101204468cc9 docker   0.0 1.1 G    ∞ │
 ╰────────────────────────────────────╯╰────────────────────────────────────╯
-q quit · ? help · Tab panel · Space pause · / filter
+q quit · ? help · w panel · Space pause · / filter
 ```
 
 ## Install (optional)
@@ -49,7 +50,8 @@ has one runtime dependency, and `cpumon --json` pipes into `jq`.
 | Key | |
 | --- | --- |
 | `q` | quit |
-| `Tab` `1`–`6` | move between panels |
+| `Tab` | move between screens |
+| `w` `1`–`6` | move between panels, on the dashboard |
 | `Space` | freeze the view (sampling continues) |
 | `/` | filter processes by name or pid |
 | `c` `m` `p` `n` `s` | sort the process table |
@@ -73,11 +75,17 @@ npx @aibulat/etop [options]
 
 ## Notes
 
+**Screens, then panels.** `Tab` walks whole screens — the dashboard, a
+full-height process table, containers, compose stacks, systemd units, tcp and
+udp connections, and wifi. Inside the dashboard, `w` and `1`–`6` move between
+the tiles.
+
 **It adapts to the terminal rather than assuming one.** Truecolor, 256-colour,
 16-colour and monochrome all get a theme that stays legible; a non-UTF-8 locale
 or the Linux console gets ASCII graphs and borders with nothing outside ASCII in
 the frame. Panels are dropped whole rather than squeezed as the window shrinks,
-down to a single-panel mode that `Tab` walks.
+down to a single-panel mode that `w` walks; the tab bar sheds tabs from the end
+rather than the one you are on.
 
 **It is honest about what it cannot read.** Network, per-process figures and
 containers need `/proc`, so on macOS and Windows those panels are removed and
