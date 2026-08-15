@@ -209,6 +209,100 @@ They are listed in the tab bar rather than hidden until they work, because the
 alternative is a tab bar whose shape changes between machines depending on what
 happens to be installed.
 
+## Tunnels
+
+SSH tunnels you have declared, with what the supervisor believes and what the
+kernel says, side by side.
+
+```
+NAME   STATE    BOUND TARGET              PORTS     DETAIL
+squid  up         2/2 root@128.199.47.190 3128,1194 connected
+web    backoff    0/1 deploy@example.com  8080      connection refused; retrying in 4s
+```
+
+Pressing `Enter` starts or stops the tunnel under the cursor; see
+[Keys](./keys#tunnels).
+
+### STATE and BOUND are not the same question
+
+`STATE` is what the supervisor believes about the ssh process it started.
+`BOUND` is how many of the tunnel's local ports actually have a listening
+socket, read from `/proc` — the same source the [connections](#connections)
+screen uses, so it costs nothing extra.
+
+They are kept apart because a live ssh proves ssh is running, and a listening
+port proves the forward exists, and those are different claims. A tunnel showing
+`up` with `1/2` is the case worth seeing: the connection is fine and one of your
+forwards is not. A single merged column would hide that behind a green word.
+
+`BOUND` shows `-` for a tunnel with nothing that listens locally — a remote
+(`-R`) forward binds on the far end, where this machine cannot see it.
+
+### Reconnecting
+
+A dropped tunnel is restarted with an exponential backoff, jittered so that two
+tunnels to the same host do not retry in lockstep. The counter resets once a
+connection has held for a minute.
+
+Failures that retrying cannot fix — a rejected key, an unknown host key, a
+hostname that does not resolve, a bad ssh option — stop instead, with a message
+saying which. `R` clears that and tries again once you have fixed it.
+
+etop runs ssh with `BatchMode=yes`, so **your key must be in an agent**. A
+supervised tunnel has no terminal to type a passphrase into, and without
+BatchMode it would hang at an invisible prompt instead of failing in a way the
+screen can report.
+
+### The config
+
+`$XDG_CONFIG_HOME/etop/tunnels.json`, or `~/.config/etop/tunnels.json`. Press
+`e` on this screen to create and edit it.
+
+```json
+{
+    "tunnels": {
+        "squid": {
+            "host": "128.199.47.190",
+            "user": "root",
+            "autostart": true,
+            "forwards": [
+                { "local": "3128:localhost:3128" },
+                { "local": "1194:localhost:1194" }
+            ]
+        }
+    }
+}
+```
+
+`host` and a non-empty `forwards` are the only required fields. A forward is
+exactly one of `local` (`-L`), `remote` (`-R`) or `dynamic` (`-D`), written the
+way ssh writes it — so a spec copied out of an existing alias works unchanged.
+`user`, `port`, `identityFile`, `autostart`, `options` (each becomes one `-o`)
+and `extraArgs` (appended verbatim) are optional.
+
+Unknown settings are refused rather than ignored: an `autostrat` that silently
+does nothing is worse than an error. Every problem in the file is reported at
+once, each naming the tunnel and field it came from.
+
+### Tunnels die with etop
+
+They are ordinary child processes, so quitting takes them with it. That is a
+deliberate choice rather than a limitation to work around — the alternative is a
+daemon, a pidfile and a second thing to manage. To keep one up without a
+dashboard open, use `etop tunnel up`, which supervises in the foreground exactly
+as a shell alias would.
+
+### There is no `down`
+
+Not from the CLI, anyway. `x` stops a tunnel this etop started and whose pid it
+knows; `Ctrl-C` stops a foreground `etop tunnel up`.
+
+What is missing is a way to stop a tunnel some *other* process started, and it
+is missing on purpose. Two etop instances with the same config produce identical
+ssh command lines, and so does a hand-typed alias — so "find the ssh whose
+arguments look like mine and kill it" is a guess, and killing on a guess is
+exactly what this dashboard refuses to do anywhere else.
+
 ## Terminal size
 
 The frame spends three rows on itself — header, tab bar, footer — so the

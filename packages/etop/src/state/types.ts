@@ -14,7 +14,7 @@ import type { SignalName } from './signals.js';
 import type { GraphStyle, ThemeName } from '../../types/index.js';
 
 
-export type PanelId = 'cpu' | 'memory' | 'disk' | 'network' | 'process' | 'container' | 'connection' | 'stack' | 'unit' | 'wifi';
+export type PanelId = 'cpu' | 'memory' | 'disk' | 'network' | 'process' | 'container' | 'connection' | 'stack' | 'unit' | 'wifi' | 'tunnel';
 
 /**
  * The order `w` walks, and the order the number keys map to.
@@ -37,10 +37,16 @@ export const PANEL_ORDER: PanelId[] = ['cpu', 'memory', 'disk', 'network', 'proc
  * units, stacks, connections and wifi as panels would mostly have added things
  * that get dropped.
  */
-export type ScreenId = 'dash' | 'proc' | 'units' | 'containers' | 'stacks' | 'conn' | 'wifi';
+export type ScreenId = 'dash' | 'proc' | 'units' | 'containers' | 'stacks' | 'conn' | 'wifi' | 'tunnels';
 
-/** the order Tab walks, and the order the tab bar shows */
-export const SCREEN_ORDER: ScreenId[] = ['dash', 'proc', 'units', 'containers', 'stacks', 'conn', 'wifi'];
+/**
+ * The order Tab walks, and the order the tab bar shows.
+ *
+ * 'tunnels' is appended rather than inserted: the walk order is muscle memory,
+ * and the number keys are indexed off PANEL_ORDER rather than this, but moving
+ * an existing tab would still change where every later one sits.
+ */
+export const SCREEN_ORDER: ScreenId[] = ['dash', 'proc', 'units', 'containers', 'stacks', 'conn', 'wifi', 'tunnels'];
 
 /** short enough that all seven fit the minimum eighty-column terminal */
 export const SCREEN_LABELS: Record<ScreenId, string> = {
@@ -51,6 +57,7 @@ export const SCREEN_LABELS: Record<ScreenId, string> = {
     stacks: 'stacks',
     conn: 'conn',
     wifi: 'wifi',
+    tunnels: 'tun',
 };
 
 /**
@@ -76,6 +83,7 @@ export const SCREEN_PANEL: Partial<Record<ScreenId, PanelId>> = {
     // the only thing a cursor would be for is connecting, and that is an
     // action this screen does not have. See plans/05-wifi-iwd.md.
     wifi: 'wifi',
+    tunnels: 'tunnel',
 };
 
 
@@ -147,6 +155,15 @@ export type UiState = {
     collapsed: Record<string, true>;
 
     /**
+     * The tunnel whose ssh output is expanded, by name.
+     *
+     * By name rather than by row index because the list is republished whenever
+     * a tunnel changes state, and a tunnel that failed while the detail was
+     * open must not silently show a different tunnel's output.
+     */
+    tunnelDetail: string | null;
+
+    /**
      * The units screen is showing every unit type, not just the interesting few.
      *
      * Off by default because a real machine has 475 loaded units and 179 of them
@@ -207,6 +224,23 @@ export type Action =
     | { type: 'toggle-expand' }
     | { type: 'toggle-collapse'; project: string }
     | { type: 'toggle-unit-types' }
+    /**
+     * The tunnel actions.
+     *
+     * Unlike every other action here, the first three change nothing about the
+     * view: they are commands to the supervisor, which App performs before the
+     * dispatch and reports through `message`. They live in the union anyway,
+     * because the keymap table is what generates the help overlay, and a key
+     * that works but is undocumented is the thing that table exists to prevent.
+     *
+     * `name` is filled in by App from a ref, the same way `toggle-collapse`
+     * gets its project - only the panel knows which row the cursor is on.
+     */
+    | { type: 'tunnel-toggle'; name: string }
+    | { type: 'tunnel-stop'; name: string }
+    | { type: 'tunnel-restart'; name: string }
+    | { type: 'tunnel-detail'; name: string }
+    | { type: 'tunnel-edit' }
     | { type: 'interface'; delta: 1 | -1 }
     | { type: 'toggle-bits' }
     | { type: 'escape' }
@@ -253,6 +287,7 @@ export function initialUi(intervalMs: number, theme: ThemeName, graph: GraphStyl
         expanded: false,
         collapsed: {},
         allUnitTypes: false,
+        tunnelDetail: null,
         interfaceIndex: 0,
         bits: false,
         mountIndex: 0,

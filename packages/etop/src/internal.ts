@@ -87,6 +87,7 @@ export {
     PROCESS_BINDINGS,
     SCREEN_BINDINGS,
     STACK_BINDINGS,
+    TUNNEL_BINDINGS,
     UNIT_BINDINGS,
 } from './state/keymap.js';
 export type { Binding, KeyState } from './state/keymap.js';
@@ -156,3 +157,63 @@ export {
 
 export { glyphsFor } from './hooks/useTheme.js';
 export type { Glyphs } from './hooks/useTheme.js';
+
+export {
+    CONFIG_VERSION,
+    TEMPLATE as TUNNEL_TEMPLATE,
+    configPath as tunnelConfigPath,
+    parseTunnelConfig,
+} from './tunnels/config.js';
+export type { Forward, ParseResult, Tunnel, TunnelConfig } from './tunnels/config.js';
+
+export {
+    DEFAULT_OPTIONS as SSH_DEFAULT_OPTIONS,
+    buildSshArgs,
+    classifyExit,
+    describeCommand,
+    forwardSpec,
+} from './tunnels/ssh.js';
+export type { ExitVerdict } from './tunnels/ssh.js';
+
+export {
+    DEFAULT_BASE_MS,
+    DEFAULT_CAP_MS,
+    STABLE_MS,
+    nextDelay,
+} from './tunnels/backoff.js';
+export type { BackoffOptions } from './tunnels/backoff.js';
+
+export {
+    DEFAULT_GRACE_MS,
+    DEFAULT_TERM_GRACE_MS,
+    TunnelSupervisor,
+} from './tunnels/supervisor.js';
+export type {
+    Child,
+    CommandResult,
+    Spawner,
+    SupervisorOptions,
+    TunnelPhase,
+    TunnelStatus,
+    TunnelsState,
+} from './tunnels/supervisor.js';
+
+export { loadTunnelConfig, writeTemplate } from './tunnels/load.js';
+export type { ConfigProbe, WriteResult } from './tunnels/load.js';
+
+export { TunnelProvider, useTunnels, useTunnelsState } from './hooks/useTunnels.js';
+export {
+    TunnelPanel,
+    stateColor,
+    targetOf,
+    toRow as tunnelRow,
+} from './panels/TunnelPanel.js';
+
+export { localPorts, ownerText, probeTunnels } from './tunnels/status.js';
+export type { PortStatus, TunnelProbe } from './tunnels/status.js';
+
+export { EDITOR_FALLBACKS, resolveEditor, runEditor } from './term/editor.js';
+export type { Editor, EditorResult } from './term/editor.js';
+
+export { buildTunnelHelp, parseCli, parseTunnelArgs } from './cli-args.js';
+export type { Cli, TunnelCommand } from './cli-args.js';

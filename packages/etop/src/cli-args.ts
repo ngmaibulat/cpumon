@@ -148,6 +148,148 @@ export function parseCliArgs(argv: string[]): CliOptions
 }
 
 
+/**
+ * What the argv asked for: the dashboard, or a tunnel subcommand.
+ *
+ * The router sits *above* parseCliArgs rather than inside it, and that is the
+ * whole design. parseCliArgs keeps `allowPositionals: false`, so the dashboard's
+ * contract is unchanged and a stray word still gets the error it always did -
+ * while the tunnel parser gets its own flag set that cannot leak into the TUI's
+ * help, and vice versa. Turning positionals on globally would have meant
+ * telling "subcommand" and "typo" apart after the fact, which is exactly the
+ * ambiguity worth not having.
+ */
+export type Cli =
+    | { kind: 'tui'; options: CliOptions }
+    | { kind: 'tunnel'; command: TunnelCommand };
+
+
+export type TunnelCommand =
+    | { verb: 'help' }
+    | { verb: 'list'; configPath?: string; json: boolean }
+    | { verb: 'status'; configPath?: string; json: boolean }
+    | { verb: 'edit'; configPath?: string }
+    | { verb: 'up'; names: string[]; all: boolean; configPath?: string };
+
+
+const TUNNEL_VERBS = ['list', 'status', 'up', 'edit', 'help'] as const;
+
+const TUNNEL_OPTIONS: OptionSpec[] = [
+    { long: 'config', arg: 'path', description: 'read this config instead of the default' },
+    { long: 'all', description: 'up: start every tunnel marked autostart' },
+    { long: 'json', description: 'list, status: machine-readable output' },
+    { long: 'help', short: 'h', description: 'show this help and exit' },
+];
+
+
+export function parseCli(argv: string[]): Cli
+{
+    const first = argv[0];
+
+    if (first === 'tunnel') {
+        return { kind: 'tunnel', command: parseTunnelArgs(argv.slice(1)) };
+    }
+
+    return { kind: 'tui', options: parseCliArgs(argv) };
+}
+
+
+export function parseTunnelArgs(argv: string[]): TunnelCommand
+{
+    let values;
+    let positionals;
+
+    try {
+        ({ values, positionals } = parseArgs({
+            args: argv,
+            options: {
+                config: { type: 'string' },
+                all: { type: 'boolean' },
+                json: { type: 'boolean' },
+                help: { type: 'boolean', short: 'h' },
+            },
+            strict: true,
+            allowPositionals: true,
+        }));
+    }
+    catch (err) {
+        throw new CliError((err as Error).message);
+    }
+
+    const configPath = values.config as string | undefined;
+    const json = values.json === true;
+
+    if (values.help === true || positionals.length === 0) {
+        return { verb: 'help' };
+    }
+
+    const [word, ...rest] = positionals;
+
+    if (!(TUNNEL_VERBS as readonly string[]).includes(word!)) {
+        throw new CliError(`unknown command "${word}"; expected ${TUNNEL_VERBS.join(', ')}`);
+    }
+
+    // narrowed by the check above; the cast is what lets the returns below be
+    // checked against TunnelCommand rather than widened to string
+    const verb = word as (typeof TUNNEL_VERBS)[number];
+
+    if (verb === 'help') {
+        return { verb: 'help' };
+    }
+
+    if (verb === 'up') {
+        const all = values.all === true;
+
+        if (!all && rest.length === 0) {
+            throw new CliError('etop tunnel up needs a tunnel name, or --all');
+        }
+
+        return configPath === undefined
+            ? { verb: 'up', names: rest, all }
+            : { verb: 'up', names: rest, all, configPath };
+    }
+
+    if (rest.length > 0) {
+        throw new CliError(`etop tunnel ${verb} takes no arguments, got "${rest[0]}"`);
+    }
+
+    if (verb === 'edit') {
+        return configPath === undefined ? { verb: 'edit' } : { verb: 'edit', configPath };
+    }
+
+    return configPath === undefined
+        ? { verb, json }
+        : { verb, json, configPath };
+}
+
+
+export function buildTunnelHelp(): string
+{
+    const flags = TUNNEL_OPTIONS.map(formatFlag);
+    const width = Math.max(...flags.map(flag => flag.length));
+
+    return [
+        'etop tunnel - run and inspect the SSH tunnels in your config',
+        '',
+        'Usage:  etop tunnel <command> [options]',
+        '',
+        'Commands:',
+        '  list                   the tunnels the config declares',
+        '  status                 which of their local ports are listening, and who holds them',
+        '  up <name...> | --all   run them in the foreground, reconnecting; Ctrl-C to stop',
+        '  edit                   open the config in $VISUAL or $EDITOR',
+        '',
+        'Options:',
+        ...TUNNEL_OPTIONS.map((opt, i) => `${flags[i].padEnd(width)}  ${opt.description}`),
+        '',
+        'There is deliberately no `down`. A tunnel is stopped by the thing that',
+        'started it: Ctrl-C here, or x on the tunnels screen. Finding somebody',
+        "else's ssh by the shape of its arguments and killing it is a guess.",
+        '',
+    ].join('\n');
+}
+
+
 function formatFlag(opt: OptionSpec): string
 {
     const short = opt.short === undefined ? '    ' : `-${opt.short}, `;

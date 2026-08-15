@@ -190,6 +190,35 @@ export function reduce(state: UiState, action: Action): UiState
             return { ...state, collapsed };
         }
 
+        /**
+         * The three that do nothing here.
+         *
+         * Starting, stopping and reconnecting a tunnel are effects on the
+         * machine, not on the view, and App performs them against the
+         * supervisor before it dispatches - the same interception the kill
+         * modal already uses to pin a pid. They are listed rather than swept
+         * into a default so that the exhaustiveness check still covers the
+         * Action union: a new action must be handled or explicitly waved
+         * through, never quietly ignored.
+         */
+        case 'tunnel-toggle':
+        case 'tunnel-stop':
+        case 'tunnel-restart':
+        case 'tunnel-edit':
+            return state;
+
+        case 'tunnel-detail':
+            // an empty name is the placeholder the binding emits when no row is
+            // selected; toggling on it would open a detail for nothing
+            if (action.name === '') {
+                return state;
+            }
+
+            return {
+                ...state,
+                tunnelDetail: state.tunnelDetail === action.name ? null : action.name,
+            };
+
         case 'toggle-unit-types':
             return {
                 ...state,
@@ -302,6 +331,7 @@ function toScreen(state: UiState, screen: ScreenId): UiState
         // the detail line belongs to the row it was opened on, and that row is
         // not on screen any more
         expanded: false,
+        tunnelDetail: null,
         filtering: false,
         filterBefore: '',
         message: null,

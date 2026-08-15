@@ -17,10 +17,13 @@ line at the top; the user-facing account of what changed lives in
 | [03 — Docker and compose stacks](./03-docker-stacks.md) | `stacks`, and a richer `containers` | **shipped** in `@aibulat/etop` 0.4.0 |
 | [04 — D-Bus and systemd units](./04-dbus-systemd.md) | `units` | **shipped** in `@aibulat/etop` 0.5.0 |
 | [05 — Wifi](./05-wifi-iwd.md) | `wifi` | **shipped** in `@aibulat/etop` 0.6.0 |
+| [06 — SSH tunnels](./06-tunnels.md) | `tunnels` | **shipped** in `@aibulat/etop` 0.7.0 |
 
-> **All five phases are shipped.** Every screen in the tab bar has a panel and
-> `Placeholder` is gone. What follows is the record of why the order was what it
-> was; each phase document ends with what actually happened when it was built.
+> **Phases 01–05 built the seven read-only screens.** Every one has a panel and
+> `Placeholder` is gone. Phase 06 is the first that *acts* rather than reports,
+> and it amends a standing decision to do it — see below. What follows is the
+> record of why the order was what it was; each phase document ends with what
+> actually happened when it was built.
 
 ## Why this order
 
@@ -54,12 +57,40 @@ fixture tree on a machine with no `/proc`. This costs a `libsysmon` version bump
 per phase and buys collectors the `cpumon` CLI and any other consumer can use.
 
 **Native sources, never a subprocess.** No `systemctl`, no `docker ps`, no `ss`,
-no `iwctl`. There is currently not one `child_process` call in either published
-package, and that is a property worth keeping: a subprocess per screen per
-refresh is both a cost and a parsing contract that drifts between tool versions.
-The docker socket speaks HTTP, `/proc/net` is a file, and D-Bus is a unix socket
-with a documented wire format. All three are reachable from Node with no
-dependency.
+no `iwctl`. A subprocess per screen per refresh is both a cost and a parsing
+contract that drifts between tool versions. The docker socket speaks HTTP,
+`/proc/net` is a file, and D-Bus is a unix socket with a documented wire format.
+All three are reachable from Node with no dependency.
+
+> **Amended by [phase 06](./06-tunnels.md).** The rule above is about
+> **collectors**, and for collectors it stands unchanged: `libsysmon` still
+> contains no `child_process` call, and phase 06 did not add one or bump its
+> version.
+>
+> What phase 06 added is a subprocess in `@aibulat/etop` that is not a
+> collector. `ssh -N -L …` is an *action the user asked for*, spawned once when
+> they ask and supervised until they stop asking. It is not sampled on a timer,
+> and nothing about the dashboard's data path depends on it. The distinction
+> that matters: a collector answers "what is the machine doing"; this answers
+> "do the thing I configured". The former must never shell out. The latter has
+> no native alternative — the ssh protocol together with the user's
+> `~/.ssh/config`, agent, `known_hosts` and key formats is not something to
+> reimplement, and OpenSSH is its only correct implementation.
+>
+> Three conditions keep the exception where it was drawn, and each is testable:
+>
+> 1. **Nothing parses ssh's output for facts about the machine.** Whether a
+>    tunnel is carrying traffic is answered from `/proc` by `getConnections()`,
+>    joined in `etop/src/tunnels/status.ts`. ssh's stderr is a failure message
+>    and an input to retry-or-stop, never a data source.
+> 2. **It lives in `packages/etop`**, behind an injectable `Spawner` seam
+>    modelled on the `Killer` in `state/signals.ts`, so no test starts a real
+>    ssh.
+> 3. **It never inherits the terminal.** `stdio: ['ignore', 'ignore', 'pipe']`.
+>
+> One further exception to the rules below: `SlowPoller`'s `setActive` gates
+> work by which screen is visible. The tunnel supervisor deliberately does not.
+> A tunnel has to keep running while you are looking at the CPU graph.
 
 **`Probe<T>` wraps a named key, never an array.** `Probe<Foo[]>` type-checks and
 then loses `available` through `JSON.stringify`, because stringifying an array

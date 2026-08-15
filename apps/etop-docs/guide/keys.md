@@ -37,8 +37,8 @@ dashboard, since every other screen is one view filling the frame.
 ## Any list
 
 Wherever there is a table with a cursor — the process, container, connections,
-stacks and units tables, on the dashboard or full screen. The wifi scan list has
-no cursor, because the only thing it would be for is connecting.
+stacks, units and tunnels tables, on the dashboard or full screen. The wifi scan
+list has no cursor, because the only thing it would be for is connecting.
 
 | Key | Action |
 | --- | --- |
@@ -63,3 +63,21 @@ no cursor, because the only thing it would be for is connecting.
 | --- | --- |
 | `←` `→` | cycle the interface |
 | `u` | show throughput in bits or bytes |
+
+## Tunnels
+
+| Key | Action |
+| --- | --- |
+| `Enter` | start or stop the selected tunnel |
+| `x` | stop the selected tunnel |
+| `R` | reconnect now, clearing the backoff and any failure |
+| `l` | show the selected tunnel's last ssh output |
+| `e` | edit the tunnel config in `$VISUAL` or `$EDITOR` |
+
+`e` hands the terminal to your editor and takes it back when you quit — the
+dashboard keeps sampling underneath, so the graphs do not lose their history and
+running tunnels are not disturbed. The config is reloaded on the way back: a
+tunnel whose command changed is restarted, one that did not is left alone, and a
+file that no longer parses stops nothing and shows the error instead.
+
+See [Screens](./screens#tunnels).

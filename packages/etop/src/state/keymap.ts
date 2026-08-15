@@ -199,7 +199,7 @@ export const SCREEN_BINDINGS: Binding[] = [
 
 
 /** every panel that draws a scrollable table and therefore has a cursor */
-const LIST_PANELS: PanelId[] = ['process', 'container', 'connection', 'stack', 'unit'];
+const LIST_PANELS: PanelId[] = ['process', 'container', 'connection', 'stack', 'unit', 'tunnel'];
 
 
 /** moving a cursor down a table, wherever the table happens to be */
@@ -306,6 +306,58 @@ export const UNIT_BINDINGS: Binding[] = [
 ];
 
 
+/**
+ * The tunnels screen.
+ *
+ * Every key here is panel-scoped, so none of them shadows a global. The ones
+ * that were considered and rejected are worth recording: `s` for "start" reads
+ * well but is the process table's sort-by-threads, and teaching a finger to
+ * press `s` in a list is a habit that goes wrong on the next screen. `r` and
+ * `t` are global (reset, theme). `u`/`d` sit next to Ctrl-U/Ctrl-D in a
+ * scrollable list, which is a trap. Enter toggling is the shape a list of
+ * things you turn on and off already has.
+ */
+export const TUNNEL_BINDINGS: Binding[] = [
+    {
+        keys: 'Enter',
+        description: 'start or stop the selected tunnel',
+        panel: 'tunnel',
+        match: (_input, key) => key.return === true,
+        // the name is filled in by App, which is the only place that knows
+        // which row the cursor has landed on
+        action: () => ({ type: 'tunnel-toggle', name: '' }),
+    },
+    {
+        keys: 'x',
+        description: 'stop the selected tunnel',
+        panel: 'tunnel',
+        match: char('x'),
+        action: () => ({ type: 'tunnel-stop', name: '' }),
+    },
+    {
+        keys: 'R',
+        description: 'reconnect now, clearing the backoff and any failure',
+        panel: 'tunnel',
+        match: char('R'),
+        action: () => ({ type: 'tunnel-restart', name: '' }),
+    },
+    {
+        keys: 'l',
+        description: "show the selected tunnel's last ssh output",
+        panel: 'tunnel',
+        match: char('l'),
+        action: () => ({ type: 'tunnel-detail', name: '' }),
+    },
+    {
+        keys: 'e',
+        description: 'edit the tunnel config in $VISUAL or $EDITOR',
+        panel: 'tunnel',
+        match: char('e'),
+        action: () => ({ type: 'tunnel-edit' }),
+    },
+];
+
+
 export const NETWORK_BINDINGS: Binding[] = [
     {
         keys: '← →',
@@ -340,6 +392,7 @@ export const PANEL_BINDINGS: Binding[] = [
     ...PROCESS_BINDINGS,
     ...STACK_BINDINGS,
     ...UNIT_BINDINGS,
+    ...TUNNEL_BINDINGS,
     ...NETWORK_BINDINGS,
     ...DISK_BINDINGS,
 ];
@@ -472,6 +525,7 @@ export function helpSections(): { title: string; bindings: Binding[] }[]
         { title: 'Processes', bindings: PROCESS_BINDINGS },
         { title: 'Stacks', bindings: STACK_BINDINGS },
         { title: 'Units', bindings: UNIT_BINDINGS },
+        { title: 'Tunnels', bindings: TUNNEL_BINDINGS },
         { title: 'Network', bindings: NETWORK_BINDINGS },
     ].filter(section => section.bindings.length > 0);
 }

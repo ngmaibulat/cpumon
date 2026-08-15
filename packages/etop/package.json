@@ -1,6 +1,6 @@
 {
     "name": "@aibulat/etop",
-    "version": "0.6.1",
+    "version": "0.7.0",
     "description": "Full-screen terminal dashboard for libsysmon: CPU, memory, disk, network, processes and containers",
     "type": "module",
     "main": "./dist/index.js",

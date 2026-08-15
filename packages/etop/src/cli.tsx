@@ -13,8 +13,9 @@
  * change that silently produces an unexecutable dist/cli.js.
  */
 
-import { CliError, buildHelp, getVersion, parseCliArgs } from './cli-args.js';
+import { CliError, buildHelp, getVersion, parseCli } from './cli-args.js';
 import { runTui } from './index.js';
+import { runTunnelCommand } from './tunnel-cli.js';
 
 
 /** ink 7's floor, and npm only *warns* on an engines mismatch */
@@ -23,19 +24,10 @@ const MINIMUM_NODE = 22;
 
 async function main(): Promise<number>
 {
-    const major = Number(process.versions.node.split('.')[0]);
-
-    if (major < MINIMUM_NODE) {
-        console.error(`etop: needs Node ${MINIMUM_NODE} or newer, found ${process.versions.node}`);
-        console.error('  `cpumon --bars` works on Node 18 and up');
-
-        return 1;
-    }
-
-    let opts;
+    let cli;
 
     try {
-        opts = parseCliArgs(process.argv.slice(2));
+        cli = parseCli(process.argv.slice(2));
     }
     catch (err) {
         if (err instanceof CliError) {
@@ -47,6 +39,25 @@ async function main(): Promise<number>
 
         throw err;
     }
+
+    // Before the version floor, deliberately. That floor is ink 7's, and the
+    // subcommands never render - reading a config and supervising ssh works on
+    // anything that can run this file at all.
+    if (cli.kind === 'tunnel') {
+        return runTunnelCommand(cli.command);
+    }
+
+    const major = Number(process.versions.node.split('.')[0]);
+
+    if (major < MINIMUM_NODE) {
+        console.error(`etop: needs Node ${MINIMUM_NODE} or newer, found ${process.versions.node}`);
+        console.error('  `cpumon --bars` works on Node 18 and up');
+        console.error('  `etop tunnel --help` works here too');
+
+        return 1;
+    }
+
+    const opts = cli.options;
 
     if (opts.help) {
         console.log(buildHelp());

@@ -196,3 +196,63 @@ test('the binary refuses every environment it cannot draw in, and says why', () 
         assert.match(result.stderr, /cpumon/, JSON.stringify(env));
     }
 });
+
+
+test('suspend detaches the signal handlers, and resume puts them back', async () => {
+    // an editor runs with the terminal inherited and in this process group, so
+    // a Ctrl-C typed at vim is delivered here too. Without this, the handler
+    // would unmount ink and exit 130 while vim still owned the screen.
+    const log = [];
+    const proc = fakeProcess();
+
+    const lifecycle = installLifecycle(fakeInstance(log), () => log.push('dispose'), proc);
+
+    assert.equal(proc.listenerCount('SIGINT'), 1);
+
+    const resume = lifecycle.suspend();
+
+    assert.equal(proc.listenerCount('SIGINT'), 0);
+
+    proc.emit('SIGINT');
+    await settle();
+
+    assert.deepEqual(log, [], 'nothing may tear down while the editor has the terminal');
+    assert.deepEqual(proc.exits, []);
+
+    resume();
+
+    assert.equal(proc.listenerCount('SIGINT'), 1);
+
+    proc.emit('SIGINT');
+    await settle();
+
+    assert.deepEqual(log, ['dispose', 'unmount', 'restored']);
+});
+
+
+test('resuming twice does not install a second set of handlers', async () => {
+    // two copies would unmount twice on one Ctrl-C
+    const proc = fakeProcess();
+    const lifecycle = installLifecycle(fakeInstance([]), () => {}, proc);
+
+    const resume = lifecycle.suspend();
+
+    resume();
+    resume();
+
+    assert.equal(proc.listenerCount('SIGINT'), 1);
+    assert.equal(proc.listenerCount('SIGTERM'), 1);
+});
+
+
+test('dispose after a resume still removes everything', () => {
+    const proc = fakeProcess();
+    const lifecycle = installLifecycle(fakeInstance([]), () => {}, proc);
+
+    lifecycle.suspend()();
+    lifecycle.dispose();
+
+    assert.equal(proc.listenerCount('SIGINT'), 0);
+    assert.equal(proc.listenerCount('SIGTERM'), 0);
+    assert.equal(proc.listenerCount('SIGHUP'), 0);
+});

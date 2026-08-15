@@ -12,6 +12,41 @@ The command that library installs is still `cpumon`, which is why `etop` points
 at `cpumon --json` when it cannot draw.
 :::
 
+## 0.7.0
+
+**The `tunnels` screen**, and `etop tunnel` on the command line. SSH tunnels are
+declared in `~/.config/etop/tunnels.json`, started and stopped from the screen,
+and reconnected with a jittered exponential backoff when the link drops. `e`
+opens the config in `$VISUAL` or `$EDITOR` and reloads it on the way back. See
+[Screens](/guide/screens#tunnels) and [Keys](/guide/keys#tunnels).
+
+The screen reports two things rather than one. `STATE` is what the supervisor
+believes about the ssh process; `BOUND` is how many of the tunnel's local ports
+actually have a listening socket, read from `/proc`. A tunnel showing `up` with
+`1/2` — connection fine, one forward not bound — is the case a single merged
+column would have hidden.
+
+`etop tunnel up squid` supervises in the foreground and is a drop-in replacement
+for an `ssh -L …` shell alias. `etop tunnel status` reports which of your ports
+are bound and who holds them, and so sees tunnels started by anything, including
+an alias still running in another pane. There is deliberately no `down`; the
+reasoning is in [Screens](/guide/screens#there-is-no-down).
+
+::: warning Your key must be in an agent
+etop runs ssh with `BatchMode=yes`. A supervised tunnel has no terminal to type
+a passphrase into, so without it a key with a passphrase would hang at an
+invisible prompt instead of failing in a way the screen can report. Run
+`ssh-add` first, or override it under `options`.
+:::
+
+This is the first release in which either package spawns a subprocess. It is
+confined to `@aibulat/etop`; `libsysmon` is unchanged and is not republished.
+The reasoning, and the three conditions that keep the exception narrow, are in
+[plans/README.md](https://github.com/ngmaibulat/cpumon/blob/main/plans/README.md).
+
+**Bug fix:** a tab-bar test asserted that `wifi` was the last screen, which
+stopped being true when `tunnels` was added after it.
+
 ## 0.6.0
 
 **The `wifi` screen**, and with it the last of the seven. The connected network

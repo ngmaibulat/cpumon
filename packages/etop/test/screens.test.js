@@ -48,7 +48,7 @@ test('every screen has a label, and the panel map only names real panels', () =>
     assert.equal(SCREEN_PANEL.dash, undefined, 'the dashboard has no single panel of its own');
     assert.deepEqual(SCREEN_PANEL, {
         proc: 'process', containers: 'container', conn: 'connection',
-        stacks: 'stack', units: 'unit', wifi: 'wifi',
+        stacks: 'stack', units: 'unit', wifi: 'wifi', tunnels: 'tunnel',
     });
 });
 
@@ -85,12 +85,16 @@ test('the active tab survives every width, and the bar never overruns', () => {
 
 
 test('a truncated bar says which end it cut', () => {
-    // wifi is last, so a narrow bar centred on it has to have cut the left
-    const narrow = fitTabs('wifi', 24);
+    // whichever screen is last: a narrow bar centred on it has to have cut the
+    // left and nothing else. Taken from SCREEN_ORDER rather than named, because
+    // naming it is how this test came to assert something about wifi that
+    // stopped being true the moment a screen was added after it.
+    const last = SCREEN_ORDER.at(-1);
+    const narrow = fitTabs(last, 24);
 
     assert.equal(narrow.moreBefore, true);
     assert.equal(narrow.moreAfter, false);
-    assert.equal(narrow.tabs.at(-1).screen, 'wifi');
+    assert.equal(narrow.tabs.at(-1).screen, last);
 
     const start = fitTabs('dash', 24);
 

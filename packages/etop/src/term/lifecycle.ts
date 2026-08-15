@@ -16,6 +16,19 @@
 export type Teardown = {
     /** unmount Ink and wait for the primary screen to come back */
     restore: () => Promise<void>;
+    /**
+     * Stop reacting to terminal signals while a child process owns the screen.
+     *
+     * Returns the resume. This is not optional and it is easy to miss. An
+     * editor is spawned with stdio inherited and in this process group, which
+     * is what makes it the terminal's foreground job - and it means a Ctrl-C
+     * typed at vim delivers SIGINT to etop as well. Without this, the handler
+     * below would unmount ink and exit 130 while vim still owned the screen,
+     * leaving a half-torn-down terminal and an editor with no parent.
+     *
+     * This is what system(3) does, for the same reason.
+     */
+    suspend: () => () => void;
     /** stop listening; called once the process is on its way out anyway */
     dispose: () => void;
 };
@@ -89,6 +102,27 @@ export function installLifecycle(
 
     return {
         restore,
+        suspend: () => {
+            for (const { signal, handler } of handlers) {
+                proc.off(signal, handler);
+            }
+
+            let resumed = false;
+
+            return () => {
+                // idempotent: a resume that ran twice would install a second
+                // copy of every handler and unmount twice on one Ctrl-C
+                if (resumed) {
+                    return;
+                }
+
+                resumed = true;
+
+                for (const { signal, handler } of handlers) {
+                    proc.once(signal, handler);
+                }
+            };
+        },
         dispose: () => {
             for (const { signal, handler } of handlers) {
                 proc.off(signal, handler);

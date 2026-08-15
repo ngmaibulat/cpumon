@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { CHROME_ROWS, computeLayout, MIN_COLUMNS, MIN_ROWS } from './hooks/useLayout.js';
 import { useStore, useStoreState } from './hooks/useStore.js';
 import { useSlow } from './hooks/useSlow.js';
+import { useTunnels } from './hooks/useTunnels.js';
 import { StyleProvider, glyphsFor } from './hooks/useTheme.js';
 import { resolve } from './state/keymap.js';
 import { reduce } from './state/reducer.js';
@@ -32,6 +33,7 @@ import { ConnectionPanel } from './panels/ConnectionPanel.js';
 import { StackPanel } from './panels/StackPanel.js';
 import { UnitPanel } from './panels/UnitPanel.js';
 import { WifiPanel } from './panels/WifiPanel.js';
+import { TunnelPanel } from './panels/TunnelPanel.js';
 import { KillModal } from './panels/KillModal.js';
 import { MemoryPanel } from './panels/MemoryPanel.js';
 import { NetworkPanel } from './panels/NetworkPanel.js';
@@ -57,13 +59,23 @@ export type AppProps = {
     theme: Parameters<typeof resolveTheme>[0];
     graph: Parameters<typeof resolveGraphStyle>[0];
     intervalMs: number;
+    /**
+     * Hand the terminal to $EDITOR and reload the tunnel config.
+     *
+     * Supplied by runTui and absent under renderToString, which has no terminal
+     * to hand over. The split is deliberate: the ink half - suspending and
+     * restoring - is here, because only a component can reach useApp; the
+     * process half - detaching the signal handlers, spawning, reloading - is in
+     * index.ts, because only it holds the lifecycle and the supervisor.
+     */
+    editConfig?: () => Promise<{ ok: boolean; message: string }>;
 };
 
 
-export function App({ capabilities, version, allowKill, kill, theme: initialTheme, graph: initialGraph, intervalMs }: AppProps)
+export function App({ capabilities, version, allowKill, kill, theme: initialTheme, graph: initialGraph, intervalMs, editConfig }: AppProps)
 {
     const { columns, rows } = useWindowSize();
-    const { exit } = useApp();
+    const { exit, suspendTerminal } = useApp();
     const store = useStore();
     const state = useStoreState();
 
@@ -108,7 +120,60 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
         project.current = next;
     }, []);
 
+    // which tunnel the cursor is on, held in a ref for the same reason
+    // `project` is: the key handler reads it once, and re-rendering on every
+    // cursor move would defeat the memo on the panel it came from
+    const tunnel = useRef<string | null>(null);
+
+    const onTunnel = useCallback((next: string | null) => {
+        tunnel.current = next;
+    }, []);
+
     const slow = useSlow();
+    const tunnels = useTunnels();
+
+    /** a second `e` before the first settles throws "already suspended" */
+    const editing = useRef(false);
+
+    /**
+     * Give the terminal to an editor, then take it back.
+     *
+     * suspendTerminal is ink's own API for this and does the whole dance:
+     * flush, erase the frame, leave the alternate screen, drop raw mode - then
+     * on the way back, restore all of it and force a *full* redraw rather than
+     * a diff against the frame that was on screen before vim drew over it.
+     * Nothing unmounts, so the reducer state, the sampling and the tunnels all
+     * survive the edit untouched.
+     */
+    const openEditor = useCallback(async () => {
+        if (editConfig === undefined) {
+            dispatch({ type: 'message', text: 'editing needs a real terminal' });
+
+            return;
+        }
+
+        if (editing.current) {
+            return;
+        }
+
+        editing.current = true;
+
+        let outcome: { ok: boolean; message: string } | null = null;
+
+        try {
+            await suspendTerminal(async () => {
+                outcome = await editConfig();
+            });
+        }
+        catch (err) {
+            outcome = { ok: false, message: `could not suspend the terminal: ${(err as Error).message}` };
+        }
+        finally {
+            editing.current = false;
+        }
+
+        dispatch({ type: 'message', text: outcome === null ? null : (outcome as { message: string }).message });
+    }, [editConfig, suspendTerminal]);
 
     /**
      * Tell the slow poller what this screen needs.
@@ -161,6 +226,34 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
         // which row the cursor is on, so the name is filled in here
         if (action.type === 'toggle-collapse') {
             dispatch({ type: 'toggle-collapse', project: project.current ?? '' });
+
+            return;
+        }
+
+        // the tunnel commands act on the machine rather than on the view, so
+        // they are performed here and reported through the footer - the same
+        // interception the kill modal uses, for the same reason: only this
+        // level knows which row the cursor has landed on
+        if (action.type === 'tunnel-toggle' || action.type === 'tunnel-stop' || action.type === 'tunnel-restart') {
+            const verb = action.type === 'tunnel-toggle'
+                ? 'toggle'
+                : (action.type === 'tunnel-stop' ? 'stop' : 'restart');
+
+            const result = tunnels?.command(verb, tunnel.current ?? '');
+
+            dispatch({ type: 'message', text: result?.message ?? 'tunnels are not available here' });
+
+            return;
+        }
+
+        if (action.type === 'tunnel-detail') {
+            dispatch({ type: 'tunnel-detail', name: tunnel.current ?? '' });
+
+            return;
+        }
+
+        if (action.type === 'tunnel-edit') {
+            void openEditor();
 
             return;
         }
@@ -302,6 +395,7 @@ export function App({ capabilities, version, allowKill, kill, theme: initialThem
                                 onView={onView}
                                 onRows={onRows}
                                 onProject={onProject}
+                                onTunnel={onTunnel}
                             />
                         )}
                 </Box>
@@ -341,6 +435,7 @@ type ScreenForProps = {
     onView: (view: ProcessView) => void;
     onRows: (rowCount: number, windowRows: number) => void;
     onProject: (project: string | null) => void;
+    onTunnel: (name: string | null) => void;
 };
 
 
@@ -352,7 +447,7 @@ type ScreenForProps = {
  * new panel code: ProcessPanel and ContainerPanel already take a width and a
  * height and render inside Panel, and "full screen" is just a bigger rect.
  */
-function ScreenFor({ width, height, layout, ui, onView, onRows, onProject }: ScreenForProps)
+function ScreenFor({ width, height, layout, ui, onView, onRows, onProject, onTunnel }: ScreenForProps)
 {
     switch (ui.screen) {
         case 'dash':
@@ -421,6 +516,20 @@ function ScreenFor({ width, height, layout, ui, onView, onRows, onProject }: Scr
 
         case 'wifi':
             return <WifiPanel width={width} height={height} focused />;
+
+        case 'tunnels':
+            return (
+                <TunnelPanel
+                    width={width}
+                    height={height}
+                    focused
+                    selected={ui.selected}
+                    scroll={ui.scroll}
+                    detail={ui.tunnelDetail}
+                    onRows={onRows}
+                    onTunnel={onTunnel}
+                />
+            );
 
         case 'units':
             return (
