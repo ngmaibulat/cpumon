@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
 import { CpuMonitor, aggregateCpu, withLoadRatio } from '../bin/CpuMonitor.js';
+import { pkgUrl } from './helpers/fixtures.js';
+
+
+// a --eval child has no module of its own to be relative to, so it resolves a
+// relative specifier against its cwd. The specifier has to carry the location.
+const MONITOR = JSON.stringify(pkgUrl('bin/CpuMonitor.js'));
 
 
 test('stopMonitor keeps listeners attached', async () => {
@@ -58,13 +64,12 @@ test('unref lets the process exit on its own', () => {
     // the only honest way to test this is a real child process - an unref'd
     // timer is invisible from inside the same process
     const script = `
-        import { CpuMonitor } from './bin/CpuMonitor.js';
+        import { CpuMonitor } from ${MONITOR};
         new CpuMonitor({ intervalMs: 60000, unref: true });
         console.log('exiting');
     `;
 
     const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
-        cwd: process.cwd(),
         timeout: 10000,
         encoding: 'utf8',
     });
@@ -77,13 +82,12 @@ test('a default monitor keeps the process alive', () => {
     // the mirror of the test above: without unref the timer must hold the
     // process open, so this child has to be killed by its own timeout
     const script = `
-        import { CpuMonitor } from './bin/CpuMonitor.js';
+        import { CpuMonitor } from ${MONITOR};
         const mon = new CpuMonitor(50);
         setTimeout(() => { console.log('still-running'); mon.stopMonitor(); }, 300);
     `;
 
     const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
-        cwd: process.cwd(),
         timeout: 10000,
         encoding: 'utf8',
     });

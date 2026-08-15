@@ -9,12 +9,13 @@ import {
     toMemoryInfo,
     withCgroupLimit,
 } from '../bin/collectors/memory.js';
+import { fixture } from './helpers/fixtures.js';
 
 
 const KIB = 1024;
 const MIB = 1024 * 1024;
 
-const FIXTURE_ROOT = { procRoot: 'test/fixtures/proc' };
+const FIXTURE_ROOT = { procRoot: fixture('proc') };
 
 
 test('parseMeminfo converts kB values to bytes', () => {
@@ -114,7 +115,7 @@ test('the payload is wrapped so MemAvailable cannot eat the discriminant', () =>
 
 
 test('readMeminfo reports a missing meminfo instead of throwing', () => {
-    const probe = readMeminfo({ procRoot: 'test/fixtures/does-not-exist' });
+    const probe = readMeminfo({ procRoot: fixture('does-not-exist') });
 
     assert.equal(probe.available, false);
     assert.equal(probe.reason, 'not-found');
@@ -122,7 +123,7 @@ test('readMeminfo reports a missing meminfo instead of throwing', () => {
 
 
 test('readMeminfo rejects a file with no MemTotal', () => {
-    const probe = readMeminfo({ procRoot: 'test/fixtures' });
+    const probe = readMeminfo({ procRoot: fixture('') });
 
     assert.equal(probe.available, false);
 });
@@ -131,7 +132,7 @@ test('readMeminfo rejects a file with no MemTotal', () => {
 test('getMemoryInfo never fails and never leaks the discriminant', () => {
     // it is not a Probe: os.totalmem()/os.freemem() work everywhere, so there is
     // no failure branch for a caller to handle
-    const info = getMemoryInfo({ procRoot: 'test/fixtures/does-not-exist' });
+    const info = getMemoryInfo({ procRoot: fixture('does-not-exist') });
 
     assert.equal(info.source, 'os');
     assert.ok(info.total > 0);

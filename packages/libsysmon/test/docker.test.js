@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdtempSync, chmodSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, chmodSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -11,9 +11,10 @@ import {
     groupIntoStacks,
     parseDockerContainers,
 } from '../bin/collectors/docker.js';
+import { readFixture } from './helpers/fixtures.js';
 
 
-const BODY = JSON.parse(readFileSync('test/fixtures/docker-containers.json', 'utf8'));
+const BODY = JSON.parse(readFixture('docker-containers.json'));
 
 const containers = () => parseDockerContainers(BODY);
 

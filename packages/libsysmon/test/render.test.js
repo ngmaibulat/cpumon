@@ -1,27 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import chalk from 'chalk';
 
-import {
-    bytes,
-    probeRow,
-    rate,
-    renderDisk,
-    renderFetch,
-    renderLoad,
-    renderMemory,
-} from '../bin/render.js';
+import * as render from '../bin/render.js';
 import { unavailable } from '../bin/index.js';
+import { plainly } from './helpers/ansi.js';
 
-// compare plain text, not escape sequences.
-//
-// This mutates the shared chalk singleton for the whole process. Under
-// `node --test` every file is its own child process, so it stays here; under
-// `bun test` it does not, and running both packages' suites in one process
-// would strip the colour the dashboard's tests assert on. That is why the root
-// `test` script fans out with `bun run --filter` - one process per package -
-// rather than calling `bun test` at the root.
-chalk.level = 0;
+// Every assertion below is about text and layout, so the colour comes off here
+// rather than by setting chalk.level - see the note in helpers/ansi.js for why
+// that switch is not this file's to throw.
+const bytes = plainly(render.bytes);
+const probeRow = plainly(render.probeRow);
+const rate = plainly(render.rate);
+const renderDisk = plainly(render.renderDisk);
+const renderFetch = plainly(render.renderFetch);
+const renderLoad = plainly(render.renderLoad);
+const renderMemory = plainly(render.renderMemory);
 
 
 const CORE = { model: 'Test CPU', idle: 90, total: 100, load: 10, loadRatio: 0.1, loadPercentage: 10 };

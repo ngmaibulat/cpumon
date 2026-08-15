@@ -13,9 +13,10 @@ import {
     sortProcesses,
     topProcesses,
 } from '../bin/collectors/process.js';
+import { fixture } from './helpers/fixtures.js';
 
 
-const FIXTURE_ROOT = { procRoot: 'test/fixtures/proc' };
+const FIXTURE_ROOT = { procRoot: fixture('proc') };
 
 const SIMPLE = '999 (bash) S 1 1 1 0 -1 4194304 100 0 0 0 500 250 0 0 20 0 4 0 12345 6193152 478 0';
 
@@ -108,7 +109,7 @@ test('getProcessCounters reads the fixture tree end to end', () => {
 
 
 test('getProcessCounters reports a missing proc tree instead of throwing', () => {
-    const probe = getProcessCounters({ procRoot: 'test/fixtures/nope' });
+    const probe = getProcessCounters({ procRoot: fixture('nope') });
 
     assert.equal(probe.available, false);
 });

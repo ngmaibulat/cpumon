@@ -11,9 +11,14 @@
 // optional dynamic require that no bundler can statically satisfy.
 
 import { rmSync, watch } from 'node:fs';
+import { join } from 'node:path';
 
-const SRC = 'src';
-const OUT = 'dist';
+// anchored to this file rather than to the cwd. The rm below is the reason it
+// matters here more than it does next door: run from the wrong directory, a
+// relative OUT deletes whatever `./dist` happens to be there.
+const PKG = join(import.meta.dir, '..');
+const SRC = join(PKG, 'src');
+const OUT = join(PKG, 'dist');
 
 
 async function build()
@@ -52,7 +57,7 @@ async function build()
         throw: true,
     });
 
-    console.log(`built ${result.outputs.length} files into ${OUT}/`);
+    console.log(`built ${result.outputs.length} files into dist/`);
 }
 
 
@@ -68,5 +73,5 @@ if (process.argv.includes('--watch')) {
         pending = setTimeout(() => { build().catch(console.error); }, 50);
     });
 
-    console.log(`watching ${SRC}/`);
+    console.log('watching src/');
 }

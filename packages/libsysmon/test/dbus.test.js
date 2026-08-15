@@ -10,7 +10,6 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import {
     Variant,
@@ -28,6 +27,7 @@ import {
     messageLength,
 } from '../bin/dbus/message.js';
 import { connectPath, parseBusAddress, systemBusAddress } from '../bin/dbus/address.js';
+import { readFixture } from './helpers/fixtures.js';
 
 
 /** marshal then unmarshal, and assert the value survived the round trip */
@@ -410,7 +410,7 @@ test('a percent-escaped path is unescaped, and a tcp bus is not accepted', () =>
  * signal the daemon volunteers straight after it, and an error reply. Three
  * message types in one stream, which is also what makes it a framing test.
  */
-const CAPTURED = Buffer.from(readFileSync('test/fixtures/dbus-replies.hex', 'utf8').trim(), 'hex');
+const CAPTURED = Buffer.from(readFixture('dbus-replies.hex').trim(), 'hex');
 
 
 function frames(buffer)

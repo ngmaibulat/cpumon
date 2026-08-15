@@ -11,10 +11,11 @@ import {
     readCgroupLimits,
 } from '../bin/collectors/cgroup.js';
 import { diffContainerCpu, listContainers } from '../bin/collectors/container.js';
+import { fixture } from './helpers/fixtures.js';
 
 
-const V2_SCOPE = 'test/fixtures/cgroup2/system.slice/'
-    + 'docker-abc123def4567890abcdef1234567890abcdef1234567890abcdef1234567890.scope';
+const V2_SCOPE = fixture('cgroup2/system.slice/'
+    + 'docker-abc123def4567890abcdef1234567890abcdef1234567890abcdef1234567890.scope');
 
 const MIB = 1024 * 1024;
 
@@ -82,8 +83,8 @@ test('parseCgroupCpuStat reads the microsecond counters', () => {
 
 
 test('detectCgroupVersion keys off the unified controllers file', () => {
-    assert.equal(detectCgroupVersion({ sysfsRoot: 'test/fixtures/cgroup2' }), 2);
-    assert.equal(detectCgroupVersion({ sysfsRoot: 'test/fixtures/cgroup1' }), 1);
+    assert.equal(detectCgroupVersion({ sysfsRoot: fixture('cgroup2') }), 2);
+    assert.equal(detectCgroupVersion({ sysfsRoot: fixture('cgroup1') }), 1);
 });
 
 
@@ -101,7 +102,7 @@ test('v2 limits come back normalised', () => {
 
 
 test('v1 limits come back in the same shape and units', () => {
-    const limits = readCgroupLimits('test/fixtures/cgroup1', 1);
+    const limits = readCgroupLimits(fixture('cgroup1'), 1);
 
     assert.equal(limits.available, true);
     // -1 is v1's "no quota"
@@ -114,7 +115,7 @@ test('v1 limits come back in the same shape and units', () => {
 
 
 test('v1 cpu usage is converted from nanoseconds to microseconds', () => {
-    const cpu = readCgroupCpu('test/fixtures/cgroup1', 1);
+    const cpu = readCgroupCpu(fixture('cgroup1'), 1);
 
     assert.equal(cpu.available, true);
     // 7000000000 ns is 7000000 us
@@ -132,7 +133,7 @@ test('v2 cpu usage is read straight from cpu.stat', () => {
 
 
 test('a missing cgroup directory is reported, not thrown', () => {
-    assert.equal(readCgroupCpu('test/fixtures/nope', 2).available, false);
+    assert.equal(readCgroupCpu(fixture('nope'), 2).available, false);
 });
 
 
@@ -149,7 +150,7 @@ test('diffContainerCpu puts one fully-used core at 100 percent', () => {
 
 
 test('listContainers finds container cgroups under a fixture root', { skip: process.platform !== 'linux' }, () => {
-    const probe = listContainers({ sysfsRoot: 'test/fixtures/cgroup2' });
+    const probe = listContainers({ sysfsRoot: fixture('cgroup2') });
 
     assert.equal(probe.available, true);
     assert.equal(probe.containers.length, 1);

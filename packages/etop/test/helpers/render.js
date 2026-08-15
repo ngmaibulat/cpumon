@@ -9,6 +9,9 @@
  * nothing to tear down and no reason for a fake-stdout harness at this level.
  */
 
+// the suite renders without a terminal, so colour has to be asked for
+import './force-color.js';
+
 import React from 'react';
 import { renderToString } from 'ink';
 

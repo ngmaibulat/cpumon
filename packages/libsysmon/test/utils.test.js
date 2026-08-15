@@ -2,11 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { getProgressBar } from '../bin/utils.js';
-
-
-// compare chalk output with the SGR escape sequences dropped
-const ANSI = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g');
-const strip = (s) => s.replace(ANSI, '');
+import { strip } from './helpers/ansi.js';
 
 
 test('getProgressBar fills nothing at 0', () => {

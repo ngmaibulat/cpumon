@@ -19,24 +19,25 @@
     },
     "packages/etop": {
       "name": "@aibulat/etop",
-      "version": "0.1.0",
+      "version": "0.6.0",
       "bin": {
-        "etop": "./dist/cli.js",
+        "etop": "dist/cli.js",
       },
       "dependencies": {
         "ink": "^7.1.1",
-        "libsysmon": "^0.5.0",
+        "libsysmon": "^0.9.0",
         "react": "^19.2.0",
       },
       "devDependencies": {
         "@types/node": "^22.0.0",
         "@types/react": "^19.2.0",
+        "chalk": "^5.6.2",
         "typescript": "^7.0.2",
       },
     },
     "packages/libsysmon": {
       "name": "libsysmon",
-      "version": "0.5.0",
+      "version": "0.9.0",
       "bin": {
         "cpumon": "bin/cpumon.js",
       },

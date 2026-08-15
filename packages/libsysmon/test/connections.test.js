@@ -8,11 +8,12 @@ import {
     getConnections,
     parseNetSockets,
 } from '../bin/collectors/connections.js';
+import { fixture } from './helpers/fixtures.js';
 
 
-const FIXTURE_ROOT = { procRoot: 'test/fixtures/proc' };
-const V4_ONLY_ROOT = { procRoot: 'test/fixtures/proc-v4only' };
-const MISSING_ROOT = { procRoot: 'test/fixtures/no-such-tree' };
+const FIXTURE_ROOT = { procRoot: fixture('proc') };
+const V4_ONLY_ROOT = { procRoot: fixture('proc-v4only') };
+const MISSING_ROOT = { procRoot: fixture('no-such-tree') };
 
 const HEADER = '  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode';
 

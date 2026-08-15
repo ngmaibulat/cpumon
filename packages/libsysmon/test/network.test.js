@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { diffNetwork, getNetworkCounters, parseNetDev } from '../bin/collectors/network.js';
+import { fixture } from './helpers/fixtures.js';
 
 
-const FIXTURE_ROOT = { procRoot: 'test/fixtures/proc' };
+const FIXTURE_ROOT = { procRoot: fixture('proc') };
 
 const counters = (name, rxBytes, txBytes) => ({
     name,
@@ -83,7 +84,7 @@ test('getNetworkCounters reads the fixture tree end to end', () => {
 
 
 test('getNetworkCounters reports a missing net/dev instead of throwing', () => {
-    const probe = getNetworkCounters({ procRoot: 'test/fixtures/nope' });
+    const probe = getNetworkCounters({ procRoot: fixture('nope') });
 
     assert.equal(probe.available, false);
     assert.equal(probe.reason, 'not-found');

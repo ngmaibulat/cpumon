@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
 import { SystemMonitor, sampleSystem } from '../bin/SystemMonitor.js';
+import { pkgUrl } from './helpers/fixtures.js';
+
+
+// see lifecycle.test.js: a --eval child resolves a relative specifier against
+// its cwd, so the specifier has to be absolute
+const MONITOR = JSON.stringify(pkgUrl('bin/SystemMonitor.js'));
 
 
 function onceSample(monitor, timeoutMs = 3000) {
@@ -132,14 +138,13 @@ test('both constructor forms are accepted', () => {
 test('unref lets the process exit on its own', () => {
     // without unref the sampling timer holds the loop open and this hangs
     const source = `
-        import { SystemMonitor } from './bin/SystemMonitor.js';
+        import { SystemMonitor } from ${MONITOR};
         new SystemMonitor({ intervalMs: 60000, unref: true });
     `;
 
     const started = Date.now();
 
     execFileSync(process.execPath, ['--input-type=module', '-e', source], {
-        cwd: process.cwd(),
         timeout: 5000,
         stdio: 'ignore',
     });

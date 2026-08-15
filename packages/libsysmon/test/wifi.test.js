@@ -10,7 +10,6 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import {
     bitrateMbps,
@@ -19,9 +18,10 @@ import {
     parseManagedObjects,
     parseProcWireless,
 } from '../bin/collectors/wifi.js';
+import { fixture, readFixture } from './helpers/fixtures.js';
 
 
-const FIXTURE = JSON.parse(readFileSync('test/fixtures/iwd-objects.json', 'utf8'));
+const FIXTURE = JSON.parse(readFixture('iwd-objects.json'));
 
 const state = () => parseManagedObjects(FIXTURE.objects, FIXTURE.ordered, FIXTURE.diagnostics);
 
@@ -212,7 +212,7 @@ test('two interfaces both come back', () => {
 test('no iwd falls back to the file, and says which source answered', async () => {
     const probe = await getWifi({
         address: '/nonexistent/bus_socket',
-        procRoot: 'test/fixtures/proc-wireless',
+        procRoot: fixture('proc-wireless'),
         timeoutMs: 300,
     });
 
@@ -225,7 +225,7 @@ test('no iwd falls back to the file, and says which source answered', async () =
 test('a machine with no wifi card is not-applicable rather than a failure', async () => {
     const probe = await getWifi({
         address: '/nonexistent/bus_socket',
-        procRoot: 'test/fixtures/proc-nowireless',
+        procRoot: fixture('proc-nowireless'),
         timeoutMs: 300,
     });
 
@@ -239,7 +239,7 @@ test('a machine with no wifi card is not-applicable rather than a failure', asyn
 test('no iwd and no file at all is not-found', async () => {
     const probe = await getWifi({
         address: '/nonexistent/bus_socket',
-        procRoot: 'test/fixtures/no-such-tree',
+        procRoot: fixture('no-such-tree'),
         timeoutMs: 300,
     });
 
@@ -251,8 +251,8 @@ test('no iwd and no file at all is not-found', async () => {
 
 test('getWifi resolves an Unavailable and never rejects', async () => {
     const results = await Promise.all([
-        getWifi({ address: '/nonexistent/a', procRoot: 'test/fixtures/no-such-tree', timeoutMs: 200 }),
-        getWifi({ address: '/nonexistent/b', procRoot: 'test/fixtures/no-such-tree', timeoutMs: 200 }),
+        getWifi({ address: '/nonexistent/a', procRoot: fixture('no-such-tree'), timeoutMs: 200 }),
+        getWifi({ address: '/nonexistent/b', procRoot: fixture('no-such-tree'), timeoutMs: 200 }),
     ]);
 
     for (const probe of results) {

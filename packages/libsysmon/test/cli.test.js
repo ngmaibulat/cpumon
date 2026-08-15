@@ -5,11 +5,12 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { OPTIONS, CliError, buildHelp, parseCliArgs } from '../bin/cli.js';
+import { pkgFile } from './helpers/fixtures.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 
-const BIN = 'bin/cpumon.js';
+const BIN = pkgFile('bin/cpumon.js');
 
 
 /** run the binary and return { status, stdout, stderr } without throwing */
@@ -17,7 +18,6 @@ function run(args)
 {
     try {
         const stdout = execFileSync(process.execPath, [BIN, ...args], {
-            cwd: process.cwd(),
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'pipe'],
         });
